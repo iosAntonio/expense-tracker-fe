@@ -1,0 +1,90 @@
+<div class="page-shell">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div>
+        <h1><span class="brand-icon" aria-hidden="true">◈</span> Registro Spese Ottobre 2026</h1>
+        <p>Periodo di tracciamento: 27 Settembre – 30 Ottobre 2026</p>
+      </div>
+      <span class="month-badge">Mese concluso</span>
+    </div>
+  </header>
+
+  <main class="dashboard">
+    <section class="metrics" aria-label="Indicatori finanziari">
+      <article class="metric-card">
+        <div><p class="metric-label">Totale Entrate</p><p class="metric-value positive">+3.056,56 €</p><p class="metric-note">Stipendio, 730, saveback, interessi</p></div>
+        <span class="metric-icon income-icon" aria-hidden="true">↙</span>
+      </article>
+      <article class="metric-card">
+        <div><p class="metric-label">Totale Spese Vive</p><p class="metric-value negative">-2.792,72 €</p><p class="metric-note">Consumi e acquisti correnti</p></div>
+        <span class="metric-icon expense-icon" aria-hidden="true">↗</span>
+      </article>
+      <article class="metric-card">
+        <div><p class="metric-label">Saldo del Periodo</p><p class="metric-value balance">+263,84 €</p><p class="metric-note">Liquidità rimasta sul C/C</p></div>
+        <span class="metric-icon balance-icon" aria-hidden="true">＝</span>
+      </article>
+      <article class="metric-card">
+        <div><p class="metric-label">Investimenti</p><p class="metric-value investment">200,00 €</p><p class="metric-note">Accumulo patrimonio (separato)</p></div>
+        <span class="metric-icon investment-icon" aria-hidden="true">↗</span>
+      </article>
+    </section>
+
+    <section class="analysis-grid" aria-label="Analisi spese">
+      <article class="panel chart-panel">
+        <h2><span class="section-icon" aria-hidden="true">◉</span> Ripartizione %</h2>
+        <div class="donut" [style.background]="chartGradient" role="img" aria-label="Grafico a ciambella della ripartizione delle spese per categoria">
+          <div class="donut-center"><span>Totale spese</span><strong>{{ formatEUR(totalExpenses) }}</strong></div>
+        </div>
+      </article>
+      <article class="panel breakdown-panel">
+        <h2><span class="section-icon" aria-hidden="true">▤</span> Dettaglio Macro-Aree</h2>
+        <div class="category-list">
+          <div class="category-row" *ngFor="let category of categories">
+            <div class="category-heading">
+              <span class="category-name"><span class="category-emoji">{{ category.emoji }}</span>{{ category.name }}</span>
+              <strong>{{ formatEUR(category.total) }} <span class="category-percent">({{ percentage(category) }}%)</span></strong>
+            </div>
+            <div class="progress-track"><div class="progress-fill" [style.width.%]="category.total / totalExpenses * 100" [style.backgroundColor]="category.color"></div></div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="panel transactions-panel">
+      <div class="table-heading">
+        <div>
+          <h2><span class="section-icon" aria-hidden="true">☷</span> Lista Singole Spese</h2>
+          <p class="table-summary">Mostrando {{ filteredTransactions.length }} di {{ transactions.length }} spese <span class="summary-separator">—</span> Totale Selezionato: <strong>{{ formatEUR(filteredTotal) }}</strong></p>
+        </div>
+        <div class="filters">
+          <label class="visually-hidden" for="searchInput">Cerca spesa</label>
+          <input id="searchInput" type="search" placeholder="Cerca spesa..." [value]="searchTerm" (input)="onSearch($event)">
+          <label class="visually-hidden" for="categoryFilter">Filtra per categoria</label>
+          <select id="categoryFilter" [value]="selectedCategory" (change)="onCategoryChange($event)">
+            <option value="ALL">Tutte le Categorie</option>
+            <option value="Viaggi">✈️ Viaggi &amp; Spostamenti</option>
+            <option value="Casa">🏠 Casa &amp; Utenze</option>
+            <option value="Spesa">🛒 Spesa &amp; Alimentari</option>
+            <option value="Trasporti">🚗 Trasporti &amp; Auto</option>
+            <option value="Svago">🍽️ Bar, Ristoranti &amp; Svago</option>
+            <option value="Personale">🎁 Regali &amp; Cura Personale</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-scroll" *ngIf="filteredTransactions.length; else emptyState">
+        <table>
+          <thead><tr><th>Data</th><th>Descrizione Spesa</th><th>Macro-Area</th><th class="amount-heading">Importo</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let transaction of filteredTransactions">
+              <td class="date-cell">{{ transaction.date }}</td>
+              <td class="description-cell">{{ transaction.desc }}</td>
+              <td><span class="category-pill"><span>{{ categoryFor(transaction.category)?.emoji }}</span>{{ categoryFor(transaction.category)?.name }}</span></td>
+              <td class="amount-cell">{{ formatEUR(transaction.amount) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ng-template #emptyState><div class="empty-state">Nessuna spesa trovata con i filtri selezionati.</div></ng-template>
+    </section>
+  </main>
+</div>

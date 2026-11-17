@@ -1,0 +1,98 @@
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 250px;
+  min-width: 250px;
+  min-height: 100vh;
+  padding: 20px 14px;
+  background: #111318;
+  border-right: 1px solid #353942;
+  color: #F4F4F5;
+  transition: width 0.25s ease, min-width 0.25s ease;
+}
+
+.sidebar.collapsed {
+  width: 76px;
+  min-width: 76px;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  margin-bottom: 36px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.brand-icon {
+  font-size: 25px;
+  color: #818CF8;
+}
+
+.brand-name {
+  font-size: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.collapse-button {
+  border: none;
+  background: transparent;
+  color: #A1A1AA;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.collapse-button:hover {
+  color: #F4F4F5;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 46px;
+  padding: 0 12px;
+  border-radius: 8px;
+  color: #A1A1AA;
+  text-decoration: none;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.nav-item:hover {
+  background: #22252D;
+  color: #F4F4F5;
+}
+
+.nav-item.active {
+  background: #2B2E3A;
+  color: #A5B4FC;
+}
+
+.nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  min-width: 22px;
+  font-size: 19px;
+}
+
+.nav-label {
+  font-size: 14px;
+  white-space: nowrap;
+}

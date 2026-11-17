@@ -1,0 +1,38 @@
+
+<aside class="sidebar" [class.collapsed]="isCollapsed">
+
+  <div class="sidebar-header">
+    <div class="brand">
+      <span class="brand-icon">◈</span>
+      <span class="brand-name" *ngIf="!isCollapsed">
+        Expense Tracker
+      </span>
+    </div>
+
+    <button
+      class="collapse-button"
+      type="button"
+      (click)="toggleSidebar()"
+      [attr.aria-label]="isCollapsed ? 'Espandi menu' : 'Riduci menu'"
+    >
+      {{ isCollapsed ? '»' : '«' }}
+    </button>
+  </div>
+
+  <nav class="sidebar-nav">
+    <a
+      *ngFor="let item of menuItems"
+      [routerLink]="item.route"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: true }"
+      class="nav-item"
+      [title]="isCollapsed ? item.label : ''"
+    >
+      <span class="nav-icon">{{ item.icon }}</span>
+      <span class="nav-label" *ngIf="!isCollapsed">
+        {{ item.label }}
+      </span>
+    </a>
+  </nav>
+
+</aside>
