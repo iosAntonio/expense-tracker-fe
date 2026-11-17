@@ -1,9 +1,19 @@
 
-<aside class="sidebar" [class.collapsed]="isCollapsed">
+<div
+  class="sidebar-backdrop"
+  *ngIf="mobileMenuOpen$ | async"
+  (click)="closeMobileMenu()"
+></div>
 
+<aside
+  class="sidebar"
+  [class.collapsed]="isCollapsed"
+  [class.mobile-open]="mobileMenuOpen$ | async"
+>
   <div class="sidebar-header">
     <div class="brand">
       <span class="brand-icon">◈</span>
+
       <span class="brand-name" *ngIf="!isCollapsed">
         Expense Tracker
       </span>
@@ -27,12 +37,13 @@
       [routerLinkActiveOptions]="{ exact: true }"
       class="nav-item"
       [title]="isCollapsed ? item.label : ''"
+      (click)="closeMobileMenu()"
     >
       <span class="nav-icon">{{ item.icon }}</span>
+
       <span class="nav-label" *ngIf="!isCollapsed">
         {{ item.label }}
       </span>
     </a>
   </nav>
-
 </aside>

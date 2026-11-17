@@ -1,5 +1,6 @@
 
 import { Component } from '@angular/core';
+import { LayoutService } from '../../core/services/layout.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -15,20 +16,18 @@ export class SidebarComponent {
       label: 'Spese',
       icon: '◫',
       route: '/expenses'
-    },
-    {
-      label: 'Report',
-      icon: '▤',
-      route: '/reports'
-    },
-    {
-      label: 'Impostazioni',
-      icon: '⚙',
-      route: '/settings'
     }
   ];
 
+  mobileMenuOpen$ = this.layoutService.mobileMenuOpen$;
+
+constructor(private layoutService: LayoutService) {}
+
   toggleSidebar(): void {
     this.isCollapsed = !this.isCollapsed;
+  }
+
+  closeMobileMenu(): void {
+    this.layoutService.closeMobileMenu();
   }
 }
