@@ -105,15 +105,129 @@ export class ExpensesComponent {
     { date: '30/10/2026', desc: 'Bolletta del gas', category: 'Casa', amount: 46.70 },
     { date: '30/10/2026', desc: 'Caffè al bancone', category: 'Svago', amount: 1.40 }
   ];
+  readonly projectStart = new Date(2026, 9, 1);
 
+  selectedMonth = this.getInitialSelectedMonth();
+
+  private getInitialSelectedMonth(): string {
+    const today = new Date();
+    const previousMonth = new Date(
+      today.getFullYear(),
+      today.getMonth() - 1,
+      1
+    );
+
+    const start = this.projectStart;
+
+    const selectedDate = previousMonth < start ? start : previousMonth;
+
+    return this.toMonthKey(selectedDate);
+  }
+
+  private toMonthKey(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+
+    return `${year}-${month}`;
+  }
+
+  get currentMonth(): string {
+    return this.toMonthKey(new Date());
+  }
+
+  get monthOptions(): { value: string; label: string }[] {
+    const options: { value: string; label: string }[] = [];
+    const today = new Date();
+
+    const cursor = new Date(
+      this.projectStart.getFullYear(),
+      this.projectStart.getMonth(),
+      1
+    );
+
+    const lastMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+    while (cursor <= lastMonth) {
+      options.push({
+        value: this.toMonthKey(cursor),
+        label: new Intl.DateTimeFormat('it-IT', {
+          month: 'long',
+          year: 'numeric'
+        }).format(cursor)
+      });
+
+      cursor.setMonth(cursor.getMonth() + 1);
+    }
+
+    return options;
+  }
+
+  get selectedMonthLabel(): string {
+    const [year, month] = this.selectedMonth.split('-').map(Number);
+
+    return new Intl.DateTimeFormat('it-IT', {
+      month: 'long',
+      year: 'numeric'
+    }).format(new Date(year, month - 1, 1));
+  }
+
+  get canGoPrevious(): boolean {
+    return this.selectedMonth > this.toMonthKey(this.projectStart);
+  }
+
+  get canGoNext(): boolean {
+    return this.selectedMonth < this.currentMonth;
+  }
+
+  goToPreviousMonth(): void {
+    if (!this.canGoPrevious) {
+      return;
+    }
+
+    const [year, month] = this.selectedMonth.split('-').map(Number);
+    this.selectedMonth = this.toMonthKey(new Date(year, month - 2, 1));
+  }
+
+  goToNextMonth(): void {
+    if (!this.canGoNext) {
+      return;
+    }
+
+    const [year, month] = this.selectedMonth.split('-').map(Number);
+    this.selectedMonth = this.toMonthKey(new Date(year, month, 1));
+  }
+
+  onMonthChange(event: Event): void {
+  const value = (event.target as HTMLSelectElement).value;
+  this.selectedMonth = value;
+}
+
+  private getMonthKey(date: string): string {
+    const [, month, year] = date.split('/');
+
+    return `${year}-${month}`;
+  }
+
+  get monthlyTransactions(): Transaction[] {
+    return this.transactions.filter(
+      transaction => this.getMonthKey(transaction.date) === this.selectedMonth
+    );
+  }
   selectedCategory = 'ALL';
   searchTerm = '';
 
   get filteredTransactions(): Transaction[] {
     const search = this.searchTerm.trim().toLocaleLowerCase('it-IT');
-    return [...this.transactions].reverse().filter(transaction => {
-      const matchesCategory = this.selectedCategory === 'ALL' || transaction.category === this.selectedCategory;
-      const matchesSearch = transaction.desc.toLocaleLowerCase('it-IT').includes(search) || transaction.date.includes(search);
+
+    return [...this.monthlyTransactions].reverse().filter(transaction => {
+      const matchesCategory =
+        this.selectedCategory === 'ALL' ||
+        transaction.category === this.selectedCategory;
+
+      const matchesSearch =
+        transaction.desc.toLocaleLowerCase('it-IT').includes(search) ||
+        transaction.date.includes(search);
+
       return matchesCategory && matchesSearch;
     });
   }

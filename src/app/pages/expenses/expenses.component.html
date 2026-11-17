@@ -1,13 +1,51 @@
 <div class="page-shell">
-  <header class="topbar">
-    <div class="topbar-inner">
-      <div>
-        <h1><span class="brand-icon" aria-hidden="true">◈</span> Registro Spese Ottobre 2026</h1>
-        <p>Periodo di tracciamento: 27 Settembre – 30 Ottobre 2026</p>
-      </div>
-      <span class="month-badge">Mese concluso</span>
+ <header class="topbar">
+  <div class="topbar-inner">
+    <div>
+      <h1>
+        <span class="brand-icon" aria-hidden="true">◈</span>
+        Registro Spese
+      </h1>
+      <p>Riepilogo del mese selezionato</p>
     </div>
-  </header>
+
+    <div class="month-navigation">
+      <button
+        type="button"
+        class="month-nav-button"
+        aria-label="Mese precedente"
+        [disabled]="!canGoPrevious"
+        (click)="goToPreviousMonth()">
+        ‹
+      </button>
+
+<select
+  class="month-selector"
+  aria-label="Seleziona mese"
+  [(ngModel)]="selectedMonth">
+
+  <option
+    *ngFor="let month of monthOptions"
+    [value]="month.value">
+    {{ month.label }}
+  </option>
+</select>
+
+      <button
+        type="button"
+        class="month-nav-button"
+        aria-label="Mese successivo"
+        [disabled]="!canGoNext"
+        (click)="goToNextMonth()">
+        ›
+      </button>
+    </div>
+
+    <span class="month-badge">
+      {{ selectedMonth < currentMonth ? 'Mese concluso' : 'Mese in corso' }}
+    </span>
+  </div>
+</header>
 
   <main class="dashboard">
     <section class="metrics" aria-label="Indicatori finanziari">
@@ -35,7 +73,7 @@
       <div class="table-heading">
         <div>
           <h2><span class="section-icon" aria-hidden="true">☷</span> Lista Singole Spese</h2>
-          <p class="table-summary">Mostrando {{ filteredTransactions.length }} di {{ transactions.length }} spese <span class="summary-separator">—</span> Totale Selezionato: <strong>{{ formatEUR(filteredTotal) }}</strong></p>
+          <p class="table-summary">Mostrando {{ filteredTransactions.length }} di {{ monthlyTransactions.length }} spese<span class="summary-separator">—</span> Totale Selezionato: <strong>{{ formatEUR(filteredTotal) }}</strong></p>
         </div>
         <div class="filters">
           <label class="visually-hidden" for="searchInput">Cerca spesa</label>
@@ -65,7 +103,16 @@
           </tbody>
         </table>
       </div>
-      <ng-template #emptyState><div class="empty-state">Nessuna spesa trovata con i filtri selezionati.</div></ng-template>
-    </section>
+<ng-template #emptyState>
+  <div class="empty-state">
+    <span *ngIf="monthlyTransactions.length; else noMonthExpenses">
+      Nessuna spesa trovata con i filtri selezionati.
+    </span>
+
+    <ng-template #noMonthExpenses>
+      Nessuna spesa registrata per {{ selectedMonthLabel }}.
+    </ng-template>
+  </div>
+</ng-template>    </section>
   </main>
 </div>
