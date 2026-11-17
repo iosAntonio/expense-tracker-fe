@@ -29,26 +29,7 @@
       </article>
     </section>
 
-    <section class="analysis-grid" aria-label="Analisi spese">
-      <article class="panel chart-panel">
-        <h2><span class="section-icon" aria-hidden="true">◉</span> Ripartizione %</h2>
-        <div class="donut" [style.background]="chartGradient" role="img" aria-label="Grafico a ciambella della ripartizione delle spese per categoria">
-          <div class="donut-center"><span>Totale spese</span><strong>{{ formatEUR(totalExpenses) }}</strong></div>
-        </div>
-      </article>
-      <article class="panel breakdown-panel">
-        <h2><span class="section-icon" aria-hidden="true">▤</span> Dettaglio Macro-Aree</h2>
-        <div class="category-list">
-          <div class="category-row" *ngFor="let category of categories">
-            <div class="category-heading">
-              <span class="category-name"><span class="category-emoji">{{ category.emoji }}</span>{{ category.name }}</span>
-              <strong>{{ formatEUR(category.total) }} <span class="category-percent">({{ percentage(category) }}%)</span></strong>
-            </div>
-            <div class="progress-track"><div class="progress-fill" [style.width.%]="category.total / totalExpenses * 100" [style.backgroundColor]="category.color"></div></div>
-          </div>
-        </div>
-      </article>
-    </section>
+  
 
     <section class="panel transactions-panel">
       <div class="table-heading">

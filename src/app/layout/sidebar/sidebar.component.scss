@@ -1,15 +1,18 @@
+:host {
+  display: block;
+  flex-shrink: 0;
+}
 
 .sidebar {
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
   width: 250px;
   min-width: 250px;
   min-height: 100vh;
   padding: 20px 14px;
-  background: #111318;
-  border-right: 1px solid #353942;
-  color: #F4F4F5;
+  background: var(--color-header);
+  border-right: 1px solid var(--color-border);
+  color: var(--color-text);
   transition: width 0.25s ease, min-width 0.25s ease;
   z-index: 1001;
 }
@@ -36,7 +39,7 @@
 
 .brand-icon {
   font-size: 25px;
-  color: #818CF8;
+  color: var(--color-accent);
 }
 
 .brand-name {
@@ -45,16 +48,21 @@
   white-space: nowrap;
 }
 
+.sidebar.collapsed .brand-name,
+.sidebar.collapsed .nav-label {
+  display: none;
+}
+
 .collapse-button {
   border: none;
   background: transparent;
-  color: #A1A1AA;
+  color: var(--color-muted);
   font-size: 22px;
   cursor: pointer;
 }
 
 .collapse-button:hover {
-  color: #F4F4F5;
+  color: var(--color-text);
 }
 
 .sidebar-nav {
@@ -70,18 +78,18 @@
   min-height: 46px;
   padding: 0 12px;
   border-radius: 8px;
-  color: #A1A1AA;
+  color: var(--color-muted);
   text-decoration: none;
   transition: background 0.2s ease, color 0.2s ease;
 }
 
 .nav-item:hover {
-  background: #22252D;
-  color: #F4F4F5;
+  background: var(--color-surface);
+  color: var(--color-text);
 }
 
 .nav-item.active {
-  background: #2B2E3A;
+  background: var(--color-surface-hover);
   color: #A5B4FC;
 }
 
@@ -108,6 +116,9 @@
     position: fixed;
     top: 0;
     left: 0;
+    width: 250px;
+    min-width: 250px;
+    height: 100vh;
     height: 100dvh;
     min-height: 100dvh;
     transform: translateX(-100%);
@@ -123,6 +134,11 @@
   .sidebar.collapsed {
     width: 250px;
     min-width: 250px;
+  }
+
+  .sidebar.mobile-open .brand-name,
+  .sidebar.mobile-open .nav-label {
+    display: inline;
   }
 
   .sidebar-backdrop {
