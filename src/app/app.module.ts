@@ -7,6 +7,7 @@ import { HeaderComponent } from './layout/header/header.component';
 import { FooterComponent } from './layout/footer/footer.component';
 import { ExpensesComponent } from './pages/expenses/expenses.component';
 import { SidebarComponent } from './layout/sidebar/sidebar.component';
+import { HttpClientModule } from '@angular/common/http';
 
 @NgModule({
   declarations: [
@@ -19,7 +20,8 @@ import { SidebarComponent } from './layout/sidebar/sidebar.component';
 imports: [
   BrowserModule,
   AppRoutingModule,
-  FormsModule
+  FormsModule,
+  HttpClientModule
 ],
   providers: [],
   bootstrap: [AppComponent]

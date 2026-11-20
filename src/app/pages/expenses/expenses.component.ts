@@ -1,4 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import {
+  ExpenseService,
+  ExpenseResponse,
+} from '../../services/expense.service';
 
 interface ExpenseCategory {
   key: string;
@@ -8,118 +12,82 @@ interface ExpenseCategory {
   total: number;
 }
 
-interface Transaction {
-  date: string;
-  desc: string;
-  category: string;
-  amount: number;
-}
-
 @Component({
   selector: 'app-expenses',
   templateUrl: './expenses.component.html',
-  styleUrls: ['./expenses.component.scss']
+  styleUrls: ['./expenses.component.scss'],
 })
-export class ExpensesComponent {
-  readonly title = 'expense-tracker-frontend';
-  readonly totalExpenses = 2792.72;
-  readonly categories: ExpenseCategory[] = [
-    { key: 'Viaggi', name: 'Viaggi & Spostamenti', emoji: '✈️', color: '#6366f1', total: 1258.71 },
-    { key: 'Casa', name: 'Casa & Utenze', emoji: '🏠', color: '#3b82f6', total: 667.58 },
-    { key: 'Spesa', name: 'Spesa & Alimentari', emoji: '🛒', color: '#10b981', total: 338.98 },
-    { key: 'Personale', name: 'Regali & Cura Personale', emoji: '🎁', color: '#ec4899', total: 241.15 },
-    { key: 'Trasporti', name: 'Trasporti & Auto', emoji: '🚗', color: '#f59e0b', total: 144.00 },
-    { key: 'Svago', name: 'Bar, Ristoranti & Svago', emoji: '🍽️', color: '#8b5cf6', total: 142.30 }
-  ];
+export class ExpensesComponent implements OnInit {
+  expenses: ExpenseResponse[] = [];
 
-  readonly transactions: Transaction[] = [
-    { date: '30/09/2026', desc: 'Rifornimento carburante', category: 'Trasporti', amount: 72.40 },
-    { date: '30/09/2026', desc: 'Colazione in centro', category: 'Svago', amount: 6.80 },
-    { date: '30/09/2026', desc: 'Verdura di stagione', category: 'Spesa', amount: 18.60 },
-    { date: '01/10/2026', desc: 'Canone mensile appartamento', category: 'Casa', amount: 520.00 },
-    { date: '01/10/2026', desc: 'Prodotti per la cura dei capelli', category: 'Personale', amount: 16.90 },
-    { date: '01/10/2026', desc: 'Pranzo al bistrot', category: 'Svago', amount: 14.50 },
-    { date: '02/10/2026', desc: 'Snack al minimarket', category: 'Svago', amount: 2.40 },
-    { date: '02/10/2026', desc: 'Acqua naturale', category: 'Spesa', amount: 1.20 },
-    { date: '02/10/2026', desc: 'Spesa settimanale', category: 'Spesa', amount: 38.75 },
-    { date: '02/10/2026', desc: 'Ingredienti per cena', category: 'Spesa', amount: 21.30 },
-    { date: '03/10/2026', desc: 'Pesce per il pranzo', category: 'Spesa', amount: 32.80 },
-    { date: '03/10/2026', desc: 'Frutta fresca', category: 'Spesa', amount: 12.50 },
-    { date: '03/10/2026', desc: 'Cappuccino e cornetto', category: 'Svago', amount: 4.60 },
-    { date: '03/10/2026', desc: 'Acquisto profumo', category: 'Personale', amount: 58.00 },
-    { date: '03/10/2026', desc: 'Aperitivo con amici', category: 'Svago', amount: 18.00 },
-    { date: '04/10/2026', desc: 'Brunch della domenica', category: 'Svago', amount: 24.00 },
-    { date: '05/10/2026', desc: 'Birra artigianale', category: 'Svago', amount: 5.50 },
-    { date: '06/10/2026', desc: 'Caffè al bar', category: 'Svago', amount: 1.80 },
-    { date: '06/10/2026', desc: 'Lezione di guida', category: 'Trasporti', amount: 28.00 },
-    { date: '06/10/2026', desc: 'Bevande per casa', category: 'Spesa', amount: 6.20 },
-    { date: '07/10/2026', desc: 'Frutta e verdura', category: 'Spesa', amount: 24.90 },
-    { date: '07/10/2026', desc: 'Birra al pub', category: 'Svago', amount: 4.50 },
-    { date: '08/10/2026', desc: 'Spesa al supermercato', category: 'Spesa', amount: 31.45 },
-    { date: '08/10/2026', desc: 'Bibita energetica', category: 'Svago', amount: 2.50 },
-    { date: '08/10/2026', desc: 'Taglio e piega', category: 'Personale', amount: 32.00 },
-    { date: '09/10/2026', desc: 'Regalo di compleanno', category: 'Personale', amount: 35.00 },
-    { date: '09/10/2026', desc: 'Caffè con collega', category: 'Svago', amount: 3.20 },
-    { date: '10/10/2026', desc: 'Pesce fresco al mercato', category: 'Spesa', amount: 39.50 },
-    { date: '10/10/2026', desc: 'Articoli per la casa', category: 'Personale', amount: 23.90 },
-    { date: '10/10/2026', desc: 'Accessori per la cucina', category: 'Casa', amount: 14.80 },
-    { date: '10/10/2026', desc: 'Gelato dopo cena', category: 'Svago', amount: 7.50 },
-    { date: '11/10/2026', desc: 'Spesa al mercato locale', category: 'Spesa', amount: 27.60 },
-    { date: '11/10/2026', desc: 'Cena fuori', category: 'Svago', amount: 34.00 },
-    { date: '14/10/2026', desc: 'Frutta e ortaggi freschi', category: 'Spesa', amount: 19.80 },
-    { date: '14/10/2026', desc: 'Spese bancarie', category: 'Casa', amount: 2.50 },
-    { date: '16/10/2026', desc: 'Pollo per cena', category: 'Spesa', amount: 10.40 },
-    { date: '16/10/2026', desc: 'Prodotti tipici locali', category: 'Spesa', amount: 16.70 },
-    { date: '16/10/2026', desc: 'Acqua minerale', category: 'Spesa', amount: 2.40 },
-    { date: '16/10/2026', desc: 'Espresso al bar', category: 'Svago', amount: 1.50 },
-    { date: '16/10/2026', desc: 'Cena in pizzeria', category: 'Svago', amount: 22.00 },
-    { date: '16/10/2026', desc: 'Formaggi locali', category: 'Spesa', amount: 8.90 },
-    { date: '18/10/2026', desc: 'Spesa per la dispensa', category: 'Spesa', amount: 26.40 },
-    { date: '19/10/2026', desc: 'Caffè macinato', category: 'Spesa', amount: 6.80 },
-    { date: '19/10/2026', desc: 'Biglietto aereo per Lisbona', category: 'Viaggi', amount: 86.50 },
-    { date: '19/10/2026', desc: 'Volo di ritorno da Lisbona', category: 'Viaggi', amount: 94.20 },
-    { date: '19/10/2026', desc: 'Verdura per la settimana', category: 'Spesa', amount: 17.30 },
-    { date: '19/10/2026', desc: 'Integratori alimentari', category: 'Personale', amount: 29.90 },
-    { date: '20/10/2026', desc: 'Corso di guida', category: 'Trasporti', amount: 28.00 },
-    { date: '21/10/2026', desc: 'Verdure fresche dal mercato', category: 'Spesa', amount: 21.70 },
-    { date: '21/10/2026', desc: 'Bibita al bar', category: 'Svago', amount: 3.80 },
-    { date: '21/10/2026', desc: 'Pensiero per un amico', category: 'Personale', amount: 18.00 },
-    { date: '22/10/2026', desc: 'Caffè da asporto', category: 'Svago', amount: 2.20 },
-    { date: '22/10/2026', desc: 'Biglietti per il teatro', category: 'Svago', amount: 26.00 },
-    { date: '22/10/2026', desc: 'Spesa per la cena', category: 'Spesa', amount: 19.65 },
-    { date: '23/10/2026', desc: 'Manutenzione impianto di riscaldamento', category: 'Casa', amount: 125.00 },
-    { date: '26/10/2026', desc: 'Prodotti per la colazione', category: 'Spesa', amount: 13.20 },
-    { date: '26/10/2026', desc: 'Cena in trattoria', category: 'Svago', amount: 28.50 },
-    { date: '26/10/2026', desc: 'Detersivi e prodotti per la casa', category: 'Spesa', amount: 18.90 },
-    { date: '26/10/2026', desc: 'Dolce in gelateria', category: 'Svago', amount: 6.50 },
-    { date: '26/10/2026', desc: 'Pesce al mercato', category: 'Spesa', amount: 34.00 },
-    { date: '26/10/2026', desc: 'Cappuccino', category: 'Svago', amount: 2.80 },
-    { date: '26/10/2026', desc: 'Pranzo con hamburger', category: 'Svago', amount: 16.50 },
-    { date: '26/10/2026', desc: 'Volo per Barcellona', category: 'Viaggi', amount: 184.60 },
-    { date: '27/10/2026', desc: 'Treno per Bologna', category: 'Viaggi', amount: 36.90 },
-    { date: '28/10/2026', desc: 'Spesa al discount', category: 'Spesa', amount: 22.75 },
-    { date: '28/10/2026', desc: 'Bolletta elettrica', category: 'Casa', amount: 74.30 },
-    { date: '29/10/2026', desc: 'Abbonamento streaming', category: 'Personale', amount: 9.99 },
-    { date: '29/10/2026', desc: 'Volo per Barcellona', category: 'Viaggi', amount: 176.40 },
-    { date: '29/10/2026', desc: 'Prenotazione treno', category: 'Viaggi', amount: 42.80 },
-    { date: '30/10/2026', desc: 'Bolletta del gas', category: 'Casa', amount: 46.70 },
-    { date: '30/10/2026', desc: 'Caffè al bancone', category: 'Svago', amount: 1.40 }
-  ];
+  isLoading = true;
+  errorMessage: string | null = null;
+
   readonly projectStart = new Date(2026, 9, 1);
 
   selectedMonth = this.getInitialSelectedMonth();
+  selectedCategory = 'ALL';
+  searchTerm = '';
+
+  // Corrispondenza tra enum backend e categorie visualizzate.
+  private readonly categoryDefinitions = [
+    {
+      key: 'ALIMENTARI',
+      name: 'Spesa & Alimentari',
+      emoji: '🛒',
+      color: '#10b981',
+    },
+    {
+      key: 'BAR_RISTORAZIONE',
+      name: 'Bar e Ristoranti',
+      emoji: '🍽️',
+      color: '#8b5cf6',
+    },
+    { key: 'CASA', name: 'Casa & Utenze', emoji: '🏠', color: '#3b82f6' },
+    { key: 'AUTO', name: 'Auto', emoji: '🚗', color: '#f59e0b' },
+    { key: 'TRASPORTI', name: 'Trasporti', emoji: '🚆', color: '#6366f1' },
+    { key: 'VIAGGI', name: 'Viaggi', emoji: '✈️', color: '#6366f1' },
+    { key: 'SPORT', name: 'Sport', emoji: '🏐', color: '#14b8a6' },
+    { key: 'SVAGO', name: 'Svago', emoji: '🎟️', color: '#8b5cf6' },
+    { key: 'SHOPPING', name: 'Shopping', emoji: '🛍️', color: '#ec4899' },
+    { key: 'SALUTE', name: 'Salute', emoji: '💊', color: '#ef4444' },
+    { key: 'ALTRO', name: 'Altro', emoji: '📦', color: '#a1a1aa' },
+  ];
+
+  constructor(private expenseService: ExpenseService) {}
+
+  ngOnInit(): void {
+    this.loadExpenses();
+  }
+
+  private loadExpenses(): void {
+    this.isLoading = true;
+    this.errorMessage = null;
+
+    this.expenseService.getAllExpenses().subscribe({
+      next: (expenses) => {
+        this.expenses = expenses;
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Errore durante il caricamento delle spese:', error);
+        this.errorMessage =
+          'Non è stato possibile caricare le spese. Riprova più tardi.';
+        this.isLoading = false;
+      },
+    });
+  }
 
   private getInitialSelectedMonth(): string {
     const today = new Date();
     const previousMonth = new Date(
       today.getFullYear(),
       today.getMonth() - 1,
-      1
+      1,
     );
 
-    const start = this.projectStart;
-
-    const selectedDate = previousMonth < start ? start : previousMonth;
+    const selectedDate =
+      previousMonth < this.projectStart ? this.projectStart : previousMonth;
 
     return this.toMonthKey(selectedDate);
   }
@@ -142,7 +110,7 @@ export class ExpensesComponent {
     const cursor = new Date(
       this.projectStart.getFullYear(),
       this.projectStart.getMonth(),
-      1
+      1,
     );
 
     const lastMonth = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -152,8 +120,8 @@ export class ExpensesComponent {
         value: this.toMonthKey(cursor),
         label: new Intl.DateTimeFormat('it-IT', {
           month: 'long',
-          year: 'numeric'
-        }).format(cursor)
+          year: 'numeric',
+        }).format(cursor),
       });
 
       cursor.setMonth(cursor.getMonth() + 1);
@@ -167,7 +135,7 @@ export class ExpensesComponent {
 
     return new Intl.DateTimeFormat('it-IT', {
       month: 'long',
-      year: 'numeric'
+      year: 'numeric',
     }).format(new Date(year, month - 1, 1));
   }
 
@@ -197,72 +165,107 @@ export class ExpensesComponent {
     this.selectedMonth = this.toMonthKey(new Date(year, month, 1));
   }
 
-  onMonthChange(event: Event): void {
-  const value = (event.target as HTMLSelectElement).value;
-  this.selectedMonth = value;
-}
-
-  private getMonthKey(date: string): string {
-    const [, month, year] = date.split('/');
-
-    return `${year}-${month}`;
-  }
-
-  get monthlyTransactions(): Transaction[] {
-    return this.transactions.filter(
-      transaction => this.getMonthKey(transaction.date) === this.selectedMonth
+  get monthlyTransactions(): ExpenseResponse[] {
+    return this.expenses.filter(
+      (expense) => expense.date.substring(0, 7) === this.selectedMonth,
     );
   }
-  selectedCategory = 'ALL';
-  searchTerm = '';
 
-  get filteredTransactions(): Transaction[] {
+  get filteredTransactions(): ExpenseResponse[] {
     const search = this.searchTerm.trim().toLocaleLowerCase('it-IT');
 
-    return [...this.monthlyTransactions].reverse().filter(transaction => {
-      const matchesCategory =
-        this.selectedCategory === 'ALL' ||
-        transaction.category === this.selectedCategory;
+    return this.monthlyTransactions
+      .filter((expense) => {
+        const matchesCategory =
+          this.selectedCategory === 'ALL' ||
+          expense.category === this.selectedCategory;
 
-      const matchesSearch =
-        transaction.desc.toLocaleLowerCase('it-IT').includes(search) ||
-        transaction.date.includes(search);
+        const formattedDate = this.formatDate(expense.date).toLocaleLowerCase(
+          'it-IT',
+        );
 
-      return matchesCategory && matchesSearch;
-    });
+        const matchesSearch =
+          (expense.description ?? '')
+            .toLocaleLowerCase('it-IT')
+            .includes(search) ||
+          formattedDate.includes(search) ||
+          expense.date.includes(search);
+
+        return matchesCategory && matchesSearch;
+      })
+      .sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+  }
+
+  get totalExpenses(): number {
+    return this.monthlyTransactions.reduce(
+      (total, expense) => total + expense.amount,
+      0,
+    );
   }
 
   get filteredTotal(): number {
-    return this.filteredTransactions.reduce((total, transaction) => total + transaction.amount, 0);
+    return this.filteredTransactions.reduce(
+      (total, expense) => total + expense.amount,
+      0,
+    );
+  }
+
+  get categories(): ExpenseCategory[] {
+    return this.categoryDefinitions.map((category) => ({
+      ...category,
+      total: this.monthlyTransactions
+        .filter((expense) => expense.category === category.key)
+        .reduce((total, expense) => total + expense.amount, 0),
+    }));
   }
 
   get chartGradient(): string {
+    if (this.totalExpenses === 0) {
+      return 'conic-gradient(var(--color-border) 0% 100%)';
+    }
+
     let position = 0;
-    const segments = this.categories.map(category => {
-      const start = position;
-      position += category.total / this.totalExpenses * 100;
-      return `${category.color} ${start}% ${position}%`;
-    });
+
+    const segments = this.categories
+      .filter((category) => category.total > 0)
+      .map((category) => {
+        const start = position;
+        position += (category.total / this.totalExpenses) * 100;
+
+        return `${category.color} ${start}% ${position}%`;
+      });
+
     return `conic-gradient(${segments.join(', ')})`;
   }
 
   percentage(category: ExpenseCategory): string {
+    if (this.totalExpenses === 0) {
+      return '0.0';
+    }
+
     return ((category.total / this.totalExpenses) * 100).toFixed(1);
   }
 
   categoryFor(key: string): ExpenseCategory | undefined {
-    return this.categories.find(category => category.key === key);
+    return this.categories.find((category) => category.key === key);
   }
 
   formatEUR(value: number): string {
-    return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(value);
+    return new Intl.NumberFormat('it-IT', {
+      style: 'currency',
+      currency: 'EUR',
+    }).format(value);
+  }
+
+  formatDate(date: string): string {
+    const [year, month, day] = date.split('-').map(Number);
+
+    return new Intl.DateTimeFormat('it-IT').format(
+      new Date(year, month - 1, day),
+    );
   }
 
   onSearch(event: Event): void {
     this.searchTerm = (event.target as HTMLInputElement).value;
-  }
-
-  onCategoryChange(event: Event): void {
-    this.selectedCategory = (event.target as HTMLSelectElement).value;
   }
 }
