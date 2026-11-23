@@ -1,9 +1,4 @@
-
-<div
-  class="sidebar-backdrop"
-  *ngIf="mobileMenuOpen$ | async"
-  (click)="closeMobileMenu()"
-></div>
+<div class="sidebar-backdrop" *ngIf="mobileMenuOpen$ | async" (click)="closeMobileMenu()"></div>
 
 <aside
   class="sidebar"
@@ -14,9 +9,7 @@
     <div class="brand">
       <span class="brand-icon">◈</span>
 
-      <span class="brand-name" >
-        Expense Tracker
-      </span>
+      <span class="brand-name"> Expense Tracker </span>
     </div>
 
     <button
@@ -41,7 +34,7 @@
     >
       <span class="nav-icon">{{ item.icon }}</span>
 
-      <span class="nav-label" >
+      <span class="nav-label">
         {{ item.label }}
       </span>
     </a>

@@ -11,13 +11,18 @@ export class SidebarComponent {
 
   isCollapsed = false;
 
-  menuItems = [
-    {
-      label: 'Spese',
-      icon: '◫',
-      route: '/expenses'
-    }
-  ];
+menuItems = [
+  {
+    label: 'Spese',
+    icon: '◫',
+    route: '/expenses'
+  },
+  {
+    label: 'Import',
+    icon: '⇧',
+    route: '/import'
+  }
+];
 
   mobileMenuOpen$ = this.layoutService.mobileMenuOpen$;
 
