@@ -5,6 +5,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { environment } from '../../../environments/environment';
 import { ToastService } from '../../core/services/toast.service';
 import { ExpenseResponse } from '../../services/expense.service';
+import { CategoryFilterComponent } from '../../shared/category-filter/category-filter.component';
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
 import { ExpenseEditDialogComponent } from './expense-edit-dialog/expense-edit-dialog.component';
 import { ExpensesComponent } from './expenses.component';
@@ -57,6 +58,7 @@ describe('ExpensesComponent', () => {
         ExpenseEditDialogComponent,
         ConfirmDialogComponent,
         PeriodSelectorComponent,
+        CategoryFilterComponent,
       ],
     }).compileComponents();
 
@@ -133,16 +135,52 @@ describe('ExpensesComponent', () => {
       expect(fixture.nativeElement.textContent).toContain('Nessuna spesa registrata');
     });
 
-    it('filters the selected month by category and search text', () => {
+    it('filters the selected month by one or more categories and by search text', () => {
       respondWith(expenses);
 
-      component.selectedCategory = 'ALIMENTARI';
+      component.selectedCategories = ['ALIMENTARI'];
       expect(ids(component.filteredTransactions)).toEqual([1]);
 
-      component.selectedCategory = 'ALL';
+      component.selectedCategories = ['ALIMENTARI', 'BAR_RISTORAZIONE'];
+      expect(ids(component.filteredTransactions)).toEqual([2, 1]);
+      expect(component.filteredTotal).toBe(70.5);
+
+      component.selectedCategories = [];
       component.searchTerm = 'cena';
       expect(ids(component.filteredTransactions)).toEqual([2]);
       expect(component.filteredTotal).toBe(30);
+    });
+
+    it('filters the table from the category filter', () => {
+      respondWith(expenses);
+      const button = fixture.nativeElement.querySelector(
+        'app-category-filter .filter-button'
+      ) as HTMLButtonElement;
+
+      button.click();
+      fixture.detectChanges();
+      const options = Array.from(
+        fixture.nativeElement.querySelectorAll('app-category-filter .option')
+      ) as HTMLElement[];
+      const bar = options.find(option => option.textContent?.includes('Bar e Ristoranti'));
+      (bar?.querySelector('input') as HTMLInputElement).click();
+      fixture.detectChanges();
+
+      expect(component.selectedCategories).toEqual(['BAR_RISTORAZIONE']);
+      expect(fixture.nativeElement.querySelectorAll('tbody tr').length).toBe(1);
+      expect(button.textContent).toContain('Bar e Ristoranti');
+    });
+
+    it('warns that the filters do not limit the deletion of the month', () => {
+      respondWith(expenses);
+      component.selectedCategories = ['ALIMENTARI'];
+      fixture.detectChanges();
+
+      deleteMonthButton().click();
+      fixture.detectChanges();
+
+      expect(confirmDialog().textContent).toContain('Verranno eliminate 2 spese');
+      expect(confirmDialog().textContent).toContain('I filtri non si applicano');
     });
 
     it('does not show made-up income, balance or investment figures', () => {

@@ -31,6 +31,7 @@ export class DashboardComponent implements OnInit {
 
   selectedYear = new Date().getFullYear();
   selectedMonth: number | null = null;
+  selectedCategories: string[] = [];
 
   years: number[] = [this.selectedYear];
   yearMonths: MonthSummary[] = monthlyTotals([], this.selectedYear);
@@ -64,9 +65,14 @@ export class DashboardComponent implements OnInit {
   }
 
   get emptyMessage(): string {
+    const what =
+      this.selectedCategories.length > 0
+        ? 'Nessuna spesa delle categorie selezionate'
+        : 'Nessuna spesa registrata';
+
     return this.selectedMonth === null
-      ? `Nessuna spesa registrata nel ${this.periodLabel}.`
-      : `Nessuna spesa registrata per ${this.periodLabel}.`;
+      ? `${what} nel ${this.periodLabel}.`
+      : `${what} per ${this.periodLabel}.`;
   }
 
   get donutDescription(): string {
@@ -84,6 +90,11 @@ export class DashboardComponent implements OnInit {
   selectYear(year: number): void {
     this.selectedYear = year;
     this.selectedMonth = null;
+    this.refresh();
+  }
+
+  selectCategories(keys: string[]): void {
+    this.selectedCategories = keys;
     this.refresh();
   }
 
@@ -121,10 +132,15 @@ export class DashboardComponent implements OnInit {
       this.selectedMonth === null
         ? `${this.selectedYear}-`
         : `${this.selectedYear}-${String(this.selectedMonth).padStart(2, '0')}-`;
-    const periodExpenses = this.expenses.filter(expense => expense.date.startsWith(prefix));
+    const categories = new Set(this.selectedCategories);
+    const scoped =
+      categories.size === 0
+        ? this.expenses
+        : this.expenses.filter(expense => categories.has(expense.category));
+    const periodExpenses = scoped.filter(expense => expense.date.startsWith(prefix));
 
     this.years = yearRange(this.expenses, [this.selectedYear, new Date().getFullYear()]);
-    this.yearMonths = monthlyTotals(this.expenses, this.selectedYear);
+    this.yearMonths = monthlyTotals(scoped, this.selectedYear);
     this.periodTotal = sumAmounts(periodExpenses);
     this.categoryTotals = categoryTotals(periodExpenses);
     this.chartGradient = this.buildGradient();

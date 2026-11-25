@@ -92,17 +92,10 @@
             [value]="searchTerm"
             (input)="onSearch($event)"
           />
-          <label class="visually-hidden" for="categoryFilter"
-            >Filtra per categoria</label
-          >
-          <select id="categoryFilter" [(ngModel)]="selectedCategory">
-            >
-            <option value="ALL">Tutte le categorie</option>
-
-            <option *ngFor="let category of categories" [value]="category.key">
-              {{ category.emoji }} {{ category.name }}
-            </option>
-          </select>
+          <app-category-filter
+            [selected]="selectedCategories"
+            (selectedChange)="selectedCategories = $event"
+          ></app-category-filter>
           <button
             type="button"
             class="button button-danger-outline delete-month-button"

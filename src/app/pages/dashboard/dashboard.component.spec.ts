@@ -4,6 +4,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 
 import { environment } from '../../../environments/environment';
 import { ExpenseResponse } from '../../services/expense.service';
+import { CategoryFilterComponent } from '../../shared/category-filter/category-filter.component';
 import { DashboardComponent } from './dashboard.component';
 import { YearOverviewComponent } from './year-overview/year-overview.component';
 
@@ -37,7 +38,7 @@ describe('DashboardComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [HttpClientTestingModule, FormsModule],
-      declarations: [DashboardComponent, YearOverviewComponent],
+      declarations: [DashboardComponent, YearOverviewComponent, CategoryFilterComponent],
     }).compileComponents();
 
     fixture = TestBed.createComponent(DashboardComponent);
@@ -173,5 +174,36 @@ describe('DashboardComponent', () => {
       'Non è stato possibile caricare le spese'
     );
     expect(element.querySelector('app-year-overview')).toBeNull();
+  });
+
+  it('filters trend, donut and breakdown by the chosen categories, also across years', async () => {
+    await respondWith(multiYear);
+    chooseYear(2025);
+
+    component.selectCategories(['BAR_RISTORAZIONE', 'CASA']);
+    fixture.detectChanges();
+
+    expect(component.yearMonths.map(month => month.total)).toEqual([
+      25, 0, 0, 0, 0, 0, 0, 0, 0, 70, 0, 90,
+    ]);
+    expect(breakdown()).toEqual(['🍽️ Bar e Ristoranti', '🏠 Casa & Utenze']);
+    expect(element.querySelector('.donut-center')?.textContent).toContain(eur(185));
+
+    chooseYear(2026);
+
+    expect(component.selectedCategories).toEqual(['BAR_RISTORAZIONE', 'CASA']);
+    expect(element.querySelector('.donut-center')?.textContent).toContain(eur(115));
+  });
+
+  it('says when the chosen categories have no expenses in the period', async () => {
+    await respondWith(multiYear);
+    chooseYear(2025);
+
+    component.selectCategories(['SPORT']);
+    fixture.detectChanges();
+
+    expect(element.querySelector('.empty-note')?.textContent).toContain(
+      'Nessuna spesa delle categorie selezionate nel 2025.'
+    );
   });
 });

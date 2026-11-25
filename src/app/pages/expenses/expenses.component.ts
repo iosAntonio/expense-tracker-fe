@@ -25,7 +25,7 @@ export class ExpensesComponent implements OnInit {
 
   // Periodo selezionato: 'AAAA-MM' per un mese, 'AAAA' per l'anno intero.
   private period = this.defaultPeriod;
-  private category = 'ALL';
+  private categoryKeys: string[] = [];
   private search = '';
 
   years: number[] = [];
@@ -33,7 +33,6 @@ export class ExpensesComponent implements OnInit {
   filteredTransactions: ExpenseResponse[] = [];
   totalExpenses = 0;
   filteredTotal = 0;
-  readonly categories = CATEGORIES;
 
   editingExpense: ExpenseResponse | null = null;
   editError: string | null = null;
@@ -85,13 +84,17 @@ export class ExpensesComponent implements OnInit {
     this.refresh();
   }
 
-  get selectedCategory(): string {
-    return this.category;
+  get selectedCategories(): string[] {
+    return this.categoryKeys;
   }
 
-  set selectedCategory(category: string) {
-    this.category = category;
+  set selectedCategories(keys: string[]) {
+    this.categoryKeys = keys;
     this.applyFilters();
+  }
+
+  get hasActiveFilters(): boolean {
+    return this.categoryKeys.length > 0 || this.search.trim() !== '';
   }
 
   get searchTerm(): string {
@@ -306,9 +309,14 @@ export class ExpensesComponent implements OnInit {
     const what =
       count === 1 ? 'Verrà eliminata 1 spesa' : `Verranno eliminate ${count} spese`;
 
+    const filtersNote = this.hasActiveFilters
+      ? 'I filtri non si applicano: viene eliminato tutto il mese. '
+      : '';
+
     return (
       `${what} di ${this.periodLabel}, per un totale di ` +
-      `${this.formatEUR(this.totalExpenses)}. L'operazione non si può annullare.`
+      `${this.formatEUR(this.totalExpenses)}. ${filtersNote}` +
+      "L'operazione non si può annullare."
     );
   }
 
@@ -362,11 +370,12 @@ export class ExpensesComponent implements OnInit {
 
   private applyFilters(): void {
     const search = this.search.trim().toLocaleLowerCase('it-IT');
+    const categories = new Set(this.categoryKeys);
 
     this.filteredTransactions = this.periodTransactions
       .filter((expense) => {
         const matchesCategory =
-          this.category === 'ALL' || expense.category === this.category;
+          categories.size === 0 || categories.has(expense.category);
 
         const formattedDate = this.formatDate(expense.date).toLocaleLowerCase(
           'it-IT',

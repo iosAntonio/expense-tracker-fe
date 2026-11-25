@@ -1,0 +1,34 @@
+<button
+  #toggleButton
+  type="button"
+  class="filter-button"
+  [class.active]="selected.length > 0"
+  aria-haspopup="true"
+  [attr.aria-expanded]="open"
+  [attr.aria-controls]="panelId"
+  (click)="toggleOpen()"
+>
+  <span class="filter-label">{{ label }}</span>
+  <span class="chevron" aria-hidden="true">▾</span>
+</button>
+
+<div
+  class="filter-panel"
+  *ngIf="open"
+  [id]="panelId"
+  role="group"
+  aria-label="Filtra per categoria"
+>
+  <label class="option" *ngFor="let category of categories">
+    <input type="checkbox" [checked]="isSelected(category.key)" (change)="toggle(category.key)" />
+    <span class="swatch" [style.backgroundColor]="category.color" aria-hidden="true"></span>
+    <span class="option-emoji" aria-hidden="true">{{ category.emoji }}</span>
+    <span class="option-name">{{ category.name }}</span>
+  </label>
+
+  <div class="panel-footer">
+    <button type="button" class="show-all" [disabled]="selected.length === 0" (click)="showAll()">
+      Mostra tutte
+    </button>
+  </div>
+</div>

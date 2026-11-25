@@ -16,6 +16,7 @@ import { ExpenseEditDialogComponent } from './pages/expenses/expense-edit-dialog
 import { PeriodSelectorComponent } from './pages/expenses/period-selector/period-selector.component';
 import { YearOverviewComponent } from './pages/dashboard/year-overview/year-overview.component';
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
+import { CategoryFilterComponent } from './shared/category-filter/category-filter.component';
 
 @NgModule({
   declarations: [
@@ -30,7 +31,8 @@ import { DashboardComponent } from './pages/dashboard/dashboard.component';
     ExpenseEditDialogComponent,
     PeriodSelectorComponent,
     YearOverviewComponent,
-    DashboardComponent
+    DashboardComponent,
+    CategoryFilterComponent
   ],
   imports: [
     BrowserModule,
