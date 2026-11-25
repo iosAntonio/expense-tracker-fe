@@ -1,0 +1,130 @@
+<div class="import-page">
+  <div class="page-heading">
+    <div>
+      <h1>Importa spese</h1>
+      <p>Carica un file JSON per aggiungere le tue transazioni.</p>
+    </div>
+  </div>
+
+  <!-- Upload -->
+  <section class="import-card upload-card">
+    <div class="section-heading">
+      <h2>Seleziona il file</h2>
+      <p>Formato supportato: JSON</p>
+    </div>
+
+    <label
+      class="upload-area"
+      for="jsonFile"
+      (dragover)="onDragOver($event)"
+      (drop)="onDrop($event)"
+    >
+      <div class="upload-icon">↑</div>
+      <h3>Trascina qui il tuo file JSON</h3>
+      <p>oppure clicca per selezionarlo dal computer</p>
+      <span class="upload-button">Seleziona file</span>
+
+      <input
+        id="jsonFile"
+        type="file"
+        accept=".json,application/json"
+        (change)="onFileSelected($event)"
+      />
+    </label>
+
+    <div class="selected-file" *ngIf="selectedFile">
+      <span>File selezionato</span>
+      <strong>{{ selectedFile }}</strong>
+    </div>
+  </section>
+
+  <!-- Errori di validazione -->
+  <section class="feedback-card error-card" *ngIf="errors.length > 0">
+    <h3>Il file contiene alcuni errori</h3>
+
+    <ul>
+      <li *ngFor="let error of errors">{{ error }}</li>
+    </ul>
+
+    <p>Correggi gli errori nel JSON e carica nuovamente il file.</p>
+  </section>
+
+  <!-- Anteprima -->
+  <section class="import-card preview-card" *ngIf="expenses.length > 0 && errors.length === 0">
+    <div class="section-heading">
+      <h2>Anteprima importazione</h2>
+      <p>Controlla le transazioni prima di procedere.</p>
+    </div>
+
+    <!-- Riepilogo e pulsanti sempre sopra la tabella -->
+    <div class="preview-toolbar">
+      <div class="summary-grid">
+        <div class="summary-item">
+          <span>Spese da importare</span>
+          <strong>{{ expenses.length }}</strong>
+        </div>
+
+        <div class="summary-item">
+          <span>Importo totale</span>
+          <strong>{{ formatAmount(totalAmount) }}</strong>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="secondary-button" (click)="resetState()">Annulla</button>
+
+        <button
+          type="button"
+          class="primary-button"
+          [disabled]="!canImport"
+          (click)="confirmImport()"
+        >
+          Conferma importazione
+        </button>
+      </div>
+    </div>
+
+    <!-- Solo questa area scorre -->
+    <div class="preview-content">
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Descrizione</th>
+              <th>Categoria</th>
+              <th>Pagamento</th>
+              <th class="amount-column">Importo</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let expense of expenses">
+              <td>{{ expense.date | date: 'dd/MM/yyyy' }}</td>
+              <td>{{ expense.description || '—' }}</td>
+              <td>{{ expense.category }}</td>
+              <td>{{ expense.paymentMethod || '—' }}</td>
+              <td class="amount-column">
+                {{ formatAmount(expense.amount) }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Errore durante la chiamata API -->
+  <section class="feedback-card error-card" *ngIf="importError">
+    <h3>Errore durante l'importazione</h3>
+    <p>{{ importError }}</p>
+  </section>
+
+  <!-- Importazione completata -->
+  <section class="feedback-card success-card" *ngIf="importedCount !== null">
+    <div class="success-icon">✓</div>
+    <h2>Importazione completata</h2>
+    <p>{{ importedCount }} spese importate correttamente.</p>
+    <button type="button" class="primary-button" (click)="resetState()">Nuova importazione</button>
+  </section>
+</div>

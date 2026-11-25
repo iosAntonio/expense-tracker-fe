@@ -1,0 +1,155 @@
+:host {
+  display: block;
+  flex-shrink: 0;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 250px;
+  min-width: 250px;
+  min-height: 100vh;
+  padding: 20px 14px;
+  background: var(--color-header);
+  border-right: 1px solid var(--color-border);
+  color: var(--color-text);
+  transition: width 0.25s ease, min-width 0.25s ease;
+  z-index: 1001;
+}
+
+.sidebar.collapsed {
+  width: 76px;
+  min-width: 76px;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  margin-bottom: 36px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.brand-icon {
+  font-size: 25px;
+  color: var(--color-accent);
+}
+
+.brand-name {
+  font-size: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.sidebar.collapsed .brand-name,
+.sidebar.collapsed .nav-label {
+  display: none;
+}
+
+.collapse-button {
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.collapse-button:hover {
+  color: var(--color-text);
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 46px;
+  padding: 0 12px;
+  border-radius: 8px;
+  color: var(--color-muted);
+  text-decoration: none;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.nav-item:hover {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.nav-item.active {
+  background: var(--color-surface-hover);
+  color: #A5B4FC;
+}
+
+.nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  min-width: 22px;
+  font-size: 19px;
+}
+
+.nav-label {
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.sidebar-backdrop {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 250px;
+    min-width: 250px;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 100dvh;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    box-shadow: none;
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+    box-shadow: 8px 0 30px rgba(0, 0, 0, 0.35);
+  }
+
+  .sidebar.collapsed {
+    width: 250px;
+    min-width: 250px;
+  }
+
+  .sidebar.mobile-open .brand-name,
+  .sidebar.mobile-open .nav-label {
+    display: inline;
+  }
+
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.6);
+  }
+
+  .collapse-button {
+    display: none;
+  }
+}

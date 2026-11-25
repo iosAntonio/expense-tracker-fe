@@ -1,1 +1,52 @@
-/* You can add global styles to this file, and also import other style files */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --color-bg: #17191F;
+  --color-header: #111318;
+  --color-surface: #22252D;
+  --color-surface-hover: #2B2E3A;
+  --color-border: #353942;
+  --color-text: #F4F4F5;
+  --color-muted: #A1A1AA;
+  --color-accent: #818CF8;
+  --color-positive: #34D399;
+  --color-negative: #F87171;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: 'Inter', sans-serif;
+}
+
+app-root {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button,
+select {
+  cursor: pointer;
+}
+
+body {
+  min-width: 320px;
+}
