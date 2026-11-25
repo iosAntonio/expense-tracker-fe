@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 export interface ExpenseResponse {
@@ -50,6 +50,15 @@ export interface ExpenseImportResponse {
   skippedExternalIds: string[];
 }
 
+export interface ExpenseImportApiResponse {
+  totalReceived: number;
+  importedCount: number;
+  alreadyImportedCount: number;
+  importedExpenses: ExpenseResponse[];
+  skippedExternalIds: string[];
+  batch: ImportBatch | null;
+}
+
 export interface ImportCheckResponse {
   previousImports: ImportBatch[];
 }
@@ -94,20 +103,26 @@ export class ExpenseService {
     fileName: string,
     expenses: ExpenseImportRequest[]
   ): Observable<ExpenseImportResponse> {
-    return this.http.post<ExpenseImportResponse>(this.importsUrl, {
-      fileName,
-      expenses
-    });
+    return this.http
+      .post<ExpenseImportApiResponse>(`${this.apiUrl}/import`, expenses, {
+        params: { fileName }
+      })
+      .pipe(
+        map(response => ({
+          batch: response.batch,
+          imported: response.importedExpenses,
+          skippedExternalIds: response.skippedExternalIds
+        }))
+      );
   }
 
   checkImport(
-    fileName: string,
     expenses: ExpenseImportRequest[]
   ): Observable<ImportCheckResponse> {
-    return this.http.post<ImportCheckResponse>(`${this.importsUrl}/check`, {
-      fileName,
+    return this.http.post<ImportCheckResponse>(
+      `${this.importsUrl}/check`,
       expenses
-    });
+    );
   }
 
   getImports(): Observable<ImportBatch[]> {

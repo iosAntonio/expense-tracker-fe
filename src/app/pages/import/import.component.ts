@@ -308,7 +308,7 @@ export class ImportComponent implements OnInit {
     const token = ++this.checkToken;
     this.isChecking = true;
 
-    this.expenseService.checkImport(this.selectedFile ?? '', this.expenses).subscribe({
+    this.expenseService.checkImport(this.expenses).subscribe({
       next: result => {
         if (token === this.checkToken) {
           this.previousImports = result.previousImports;

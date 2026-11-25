@@ -55,25 +55,32 @@ describe('ExpenseService', () => {
     expect(result).toEqual([]);
   });
 
-  it('sends the file name with the rows to import and returns the summary', () => {
-    const summary: ExpenseImportResponse = { batch, imported: [], skippedExternalIds: [] };
+  it('posts the rows to the import with the file name and returns the summary', () => {
     let result: ExpenseImportResponse | undefined;
     service.importExpenses('ottobre.json', rows).subscribe(response => (result = response));
 
-    const request = httpMock.expectOne(importsUrl);
+    const request = httpMock.expectOne(req => req.url === `${environment.apiUrl}/expenses/import`);
     expect(request.request.method).toBe('POST');
-    expect(request.request.body).toEqual({ fileName: 'ottobre.json', expenses: rows });
-    request.flush(summary);
+    expect(request.request.params.get('fileName')).toBe('ottobre.json');
+    expect(request.request.body).toEqual(rows);
+    request.flush({
+      totalReceived: 1,
+      importedCount: 0,
+      alreadyImportedCount: 1,
+      importedExpenses: [],
+      skippedExternalIds: ['a-1'],
+      batch: null,
+    });
 
-    expect(result).toEqual(summary);
+    expect(result).toEqual({ batch: null, imported: [], skippedExternalIds: ['a-1'] });
   });
 
   it('asks whether the same content was already imported', () => {
-    service.checkImport('ottobre.json', rows).subscribe();
+    service.checkImport(rows).subscribe();
 
     const request = httpMock.expectOne(`${importsUrl}/check`);
     expect(request.request.method).toBe('POST');
-    expect(request.request.body).toEqual({ fileName: 'ottobre.json', expenses: rows });
+    expect(request.request.body).toEqual(rows);
     request.flush({ previousImports: [] });
   });
 

@@ -27,6 +27,7 @@ function batch(overrides: Partial<ImportBatch> = {}): ImportBatch {
 
 describe('ImportComponent', () => {
   const importsUrl = `${environment.apiUrl}/imports`;
+  const importUrl = `${environment.apiUrl}/expenses/import`;
   const validRows = [
     {
       externalId: 'a-1',
@@ -83,18 +84,22 @@ describe('ImportComponent', () => {
   async function dropValidFile(previousImports: ImportBatch[] = []): Promise<void> {
     await dropFile(JSON.stringify(validRows));
     const check = httpMock.expectOne(`${importsUrl}/check`);
-    expect(check.request.body.fileName).toBe('spese.json');
+    expect(check.request.body.map((row: { externalId: string }) => row.externalId)).toEqual([
+      'a-1',
+      'a-2',
+    ]);
     check.flush({ previousImports });
     fixture.detectChanges();
   }
 
   function confirmImport(response: object): void {
     component.confirmImport();
-    const request = httpMock.expectOne(req => req.method === 'POST' && req.url === importsUrl);
-    expect(request.request.body.fileName).toBe('spese.json');
-    expect(
-      request.request.body.expenses.map((row: { externalId: string }) => row.externalId)
-    ).toEqual(['a-1', 'a-2']);
+    const request = httpMock.expectOne(req => req.method === 'POST' && req.url === importUrl);
+    expect(request.request.params.get('fileName')).toBe('spese.json');
+    expect(request.request.body.map((row: { externalId: string }) => row.externalId)).toEqual([
+      'a-1',
+      'a-2',
+    ]);
     request.flush(response);
     fixture.detectChanges();
   }
@@ -153,8 +158,11 @@ describe('ImportComponent', () => {
   it('reports imported and skipped expenses and can undo the import right away', async () => {
     await dropValidFile();
     confirmImport({
+      totalReceived: 2,
+      importedCount: 1,
+      alreadyImportedCount: 1,
       batch: batch({ id: 7, rowCount: 2, importedCount: 1, skippedCount: 1 }),
-      imported: [
+      importedExpenses: [
         {
           id: 7,
           date: '2026-10-05',
@@ -194,7 +202,14 @@ describe('ImportComponent', () => {
 
   it('says so when every expense was already present and offers nothing to undo', async () => {
     await dropValidFile();
-    confirmImport({ batch: null, imported: [], skippedExternalIds: ['a-1', 'a-2'] });
+    confirmImport({
+      totalReceived: 2,
+      importedCount: 0,
+      alreadyImportedCount: 2,
+      batch: null,
+      importedExpenses: [],
+      skippedExternalIds: ['a-1', 'a-2'],
+    });
     respondToHistory([]);
 
     expect(component.importedMessage).toBe('Nessuna nuova spesa importata.');
@@ -212,7 +227,7 @@ describe('ImportComponent', () => {
     component.confirmImport();
 
     httpMock
-      .expectOne(req => req.method === 'POST' && req.url === importsUrl)
+      .expectOne(req => req.method === 'POST' && req.url === importUrl)
       .flush({ message: 'Dati non validi.' }, { status: 400, statusText: 'Bad Request' });
     fixture.detectChanges();
 
