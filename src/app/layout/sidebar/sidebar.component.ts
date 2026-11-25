@@ -13,6 +13,11 @@ export class SidebarComponent {
 
 menuItems = [
   {
+    label: 'Dashboard',
+    icon: '◔',
+    route: '/dashboard'
+  },
+  {
     label: 'Spese',
     icon: '◫',
     route: '/expenses'

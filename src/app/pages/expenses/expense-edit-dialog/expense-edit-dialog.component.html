@@ -1,0 +1,56 @@
+<dialog #dialog class="app-dialog" aria-labelledby="edit-expense-title" (cancel)="onCancel($event)">
+  <form class="dialog-body" novalidate (ngSubmit)="submit()">
+    <h2 id="edit-expense-title">Modifica spesa</h2>
+
+    <div class="field-grid">
+      <label class="field">
+        <span>Data</span>
+        <input type="date" name="date" [(ngModel)]="form.date" required />
+      </label>
+
+      <label class="field">
+        <span>Importo (€)</span>
+        <input
+          type="number"
+          name="amount"
+          [(ngModel)]="form.amount"
+          min="0.01"
+          step="0.01"
+          inputmode="decimal"
+          required
+        />
+      </label>
+
+      <label class="field field-wide">
+        <span>Descrizione</span>
+        <input type="text" name="description" [(ngModel)]="form.description" maxlength="255" />
+      </label>
+
+      <label class="field">
+        <span>Categoria</span>
+        <select name="category" [(ngModel)]="form.category">
+          <option *ngFor="let category of categories" [value]="category.key">
+            {{ category.label }}
+          </option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Metodo di pagamento</span>
+        <input type="text" name="paymentMethod" [(ngModel)]="form.paymentMethod" maxlength="255" />
+      </label>
+    </div>
+
+    <ul class="form-errors" *ngIf="errors.length > 0 || serverError" role="alert">
+      <li *ngFor="let error of errors">{{ error }}</li>
+      <li *ngIf="serverError">{{ serverError }}</li>
+    </ul>
+
+    <div class="dialog-actions">
+      <button type="button" class="button" [disabled]="saving" (click)="dismiss()">Annulla</button>
+      <button type="submit" class="button button-primary" [disabled]="saving">
+        {{ saving ? 'Salvataggio…' : 'Salva modifiche' }}
+      </button>
+    </div>
+  </form>
+</dialog>

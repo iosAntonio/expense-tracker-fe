@@ -1,0 +1,39 @@
+<section class="year-overview" [attr.aria-label]="'Andamento ' + year">
+  <header class="overview-heading">
+    <h2>Andamento {{ year }}</h2>
+    <p class="overview-summary" *ngIf="monthsWithExpenses > 0; else noExpenses">
+      <span
+        >Totale <strong>{{ formatEUR(total) }}</strong></span
+      >
+      <span
+        >Media dei mesi con spese <strong>{{ formatEUR(average) }}</strong></span
+      >
+      <span *ngIf="topMonth">
+        Mese più alto <strong>{{ topMonth.label }}, {{ formatEUR(topMonth.total) }}</strong>
+      </span>
+    </p>
+    <ng-template #noExpenses>
+      <p class="overview-summary">Nessuna spesa registrata nel {{ year }}.</p>
+    </ng-template>
+  </header>
+
+  <ol class="month-bars" [class.year-view]="selectedMonth === null">
+    <li *ngFor="let bar of bars; trackBy: trackMonth">
+      <button
+        type="button"
+        class="month-bar"
+        [class.selected]="bar.month === selectedMonth"
+        [class.empty]="bar.count === 0"
+        [attr.aria-pressed]="bar.month === selectedMonth"
+        [attr.aria-label]="bar.description"
+        [title]="bar.description"
+        (click)="monthSelected.emit(bar.month)"
+      >
+        <span class="bar-track">
+          <span class="bar-fill" [style.height.%]="bar.height"></span>
+        </span>
+        <span class="bar-label">{{ bar.shortLabel }}</span>
+      </button>
+    </li>
+  </ol>
+</section>

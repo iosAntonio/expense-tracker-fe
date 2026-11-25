@@ -1,14 +1,19 @@
 
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import { DashboardComponent } from './pages/dashboard/dashboard.component';
 import { ExpensesComponent } from './pages/expenses/expenses.component';
 import { ImportComponent } from './pages/import/import.component';
 
 const routes: Routes = [
   {
     path: '',
-    redirectTo: 'expenses',
+    redirectTo: 'dashboard',
     pathMatch: 'full'
+  },
+  {
+    path: 'dashboard',
+    component: DashboardComponent
   },
   {
     path: 'expenses',
@@ -20,7 +25,7 @@ const routes: Routes = [
   },
   {
     path: '**',
-    redirectTo: 'expenses'
+    redirectTo: 'dashboard'
   }
 ];
 

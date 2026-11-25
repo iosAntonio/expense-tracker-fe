@@ -56,6 +56,10 @@
       <p>Controlla le transazioni prima di procedere.</p>
     </div>
 
+    <p class="duplicate-warning" *ngIf="previousImportMessage" role="status">
+      {{ previousImportMessage }}
+    </p>
+
     <!-- Riepilogo e pulsanti sempre sopra la tabella -->
     <div class="preview-toolbar">
       <div class="summary-grid">
@@ -102,7 +106,7 @@
             <tr *ngFor="let expense of expenses">
               <td>{{ expense.date | date: 'dd/MM/yyyy' }}</td>
               <td>{{ expense.description || '—' }}</td>
-              <td>{{ expense.category }}</td>
+              <td>{{ categoryName(expense.category) }}</td>
               <td>{{ expense.paymentMethod || '—' }}</td>
               <td class="amount-column">
                 {{ formatAmount(expense.amount) }}
@@ -124,7 +128,70 @@
   <section class="feedback-card success-card" *ngIf="importedCount !== null">
     <div class="success-icon">✓</div>
     <h2>Importazione completata</h2>
-    <p>{{ importedCount }} spese importate correttamente.</p>
-    <button type="button" class="primary-button" (click)="resetState()">Nuova importazione</button>
+    <p>{{ importedMessage }}</p>
+    <p *ngIf="skippedMessage">{{ skippedMessage }}</p>
+    <p *ngIf="revertMessage">{{ revertMessage }}</p>
+    <div class="actions success-actions">
+      <button
+        *ngIf="lastBatch && !lastBatch.revertedAt"
+        type="button"
+        class="secondary-button danger-button"
+        [disabled]="revertingId !== null"
+        (click)="requestRevert(lastBatch)"
+      >
+        {{ confirmingRevertId === lastBatch.id ? 'Conferma annullamento' : 'Annulla questo import' }}
+      </button>
+      <button type="button" class="primary-button" (click)="resetState()">Nuova importazione</button>
+    </div>
+  </section>
+
+  <!-- Registro degli import -->
+  <section class="import-card history-card" *ngIf="expenses.length === 0">
+    <div class="section-heading">
+      <h2>Import recenti</h2>
+      <p>Annullando un import si cancellano tutte le spese che aveva aggiunto.</p>
+    </div>
+
+    <p class="history-message" *ngIf="historyError">{{ historyError }}</p>
+    <p class="history-message" *ngIf="!historyError && batches.length === 0">
+      Nessun import registrato.
+    </p>
+
+    <div class="table-container" *ngIf="batches.length > 0">
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>File</th>
+            <th class="amount-column">Importate</th>
+            <th class="amount-column">Saltate</th>
+            <th>Stato</th>
+            <th><span class="visually-hidden">Azioni</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let batch of batches; trackBy: trackBatch" [class.reverted]="!!batch.revertedAt">
+            <td>{{ batch.importedAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+            <td>{{ batch.fileName }}</td>
+            <td class="amount-column">{{ batch.importedCount }}</td>
+            <td class="amount-column">{{ batch.skippedCount }}</td>
+            <td>
+              {{ batch.revertedAt ? 'Annullato il ' + (batch.revertedAt | date: 'dd/MM/yyyy HH:mm') : 'Attivo' }}
+            </td>
+            <td class="action-column">
+              <button
+                *ngIf="!batch.revertedAt"
+                type="button"
+                class="secondary-button danger-button"
+                [disabled]="revertingId !== null"
+                (click)="requestRevert(batch)"
+              >
+                {{ confirmingRevertId === batch.id ? 'Conferma annullamento' : 'Annulla import' }}
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </section>
 </div>

@@ -10,6 +10,12 @@ import { FooterComponent } from './layout/footer/footer.component';
 import { ExpensesComponent } from './pages/expenses/expenses.component';
 import { SidebarComponent } from './layout/sidebar/sidebar.component';
 import { ImportComponent } from './pages/import/import.component';
+import { ToastComponent } from './layout/toast/toast.component';
+import { ConfirmDialogComponent } from './shared/confirm-dialog/confirm-dialog.component';
+import { ExpenseEditDialogComponent } from './pages/expenses/expense-edit-dialog/expense-edit-dialog.component';
+import { PeriodSelectorComponent } from './pages/expenses/period-selector/period-selector.component';
+import { YearOverviewComponent } from './pages/dashboard/year-overview/year-overview.component';
+import { DashboardComponent } from './pages/dashboard/dashboard.component';
 
 @NgModule({
   declarations: [
@@ -18,7 +24,13 @@ import { ImportComponent } from './pages/import/import.component';
     FooterComponent,
     ExpensesComponent,
     SidebarComponent,
-    ImportComponent
+    ImportComponent,
+    ToastComponent,
+    ConfirmDialogComponent,
+    ExpenseEditDialogComponent,
+    PeriodSelectorComponent,
+    YearOverviewComponent,
+    DashboardComponent
   ],
   imports: [
     BrowserModule,

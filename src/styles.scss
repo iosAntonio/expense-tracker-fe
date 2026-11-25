@@ -50,3 +50,119 @@ select {
 body {
   min-width: 320px;
 }
+
+/* Finestre di dialogo e pulsanti condivisi */
+
+.app-dialog {
+  width: min(480px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
+}
+
+.app-dialog::backdrop {
+  background: rgba(8, 9, 12, 0.65);
+}
+
+.dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+
+  h2 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 600;
+  }
+
+  p {
+    margin: 0;
+    color: var(--color-muted);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+}
+
+.dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.button {
+  padding: 8px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+
+  &:hover:not(:disabled) {
+    background: var(--color-surface-hover);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.button-primary,
+.button-danger {
+  border-color: transparent;
+  color: var(--color-header);
+
+  &:hover:not(:disabled) {
+    filter: brightness(1.1);
+  }
+}
+
+.button-primary,
+.button-primary:hover:not(:disabled) {
+  background: var(--color-accent);
+}
+
+.button-danger,
+.button-danger:hover:not(:disabled) {
+  background: var(--color-negative);
+}
+
+.button-danger-outline {
+  color: var(--color-negative);
+}
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: none;
+  color: var(--color-muted);
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  &:hover {
+    border-color: var(--color-border);
+    color: var(--color-text);
+  }
+
+  &.danger:hover {
+    color: var(--color-negative);
+  }
+}

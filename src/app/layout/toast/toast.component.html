@@ -1,0 +1,20 @@
+<div class="toast-container" aria-live="polite">
+  <div
+    *ngFor="let toast of toasts$ | async; trackBy: trackToast"
+    class="toast"
+    [class.toast-success]="toast.type === 'success'"
+    [class.toast-error]="toast.type === 'error'"
+    [attr.role]="toast.type === 'error' ? 'alert' : 'status'"
+  >
+    <span class="toast-icon" aria-hidden="true">{{ toast.type === 'success' ? '✓' : '!' }}</span>
+    <p class="toast-message">{{ toast.message }}</p>
+    <button
+      type="button"
+      class="toast-close"
+      aria-label="Chiudi notifica"
+      (click)="dismiss(toast.id)"
+    >
+      ×
+    </button>
+  </div>
+</div>

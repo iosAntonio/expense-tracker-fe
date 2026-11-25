@@ -1,0 +1,38 @@
+<button
+  type="button"
+  class="period-nav-button"
+  [attr.aria-label]="month === null ? 'Anno precedente' : 'Mese precedente'"
+  [disabled]="!canGoPrevious"
+  (click)="previous.emit()"
+>
+  ‹
+</button>
+
+<select
+  class="period-select year-select"
+  aria-label="Seleziona anno"
+  [ngModel]="year"
+  (ngModelChange)="yearChange.emit($event)"
+>
+  <option *ngFor="let option of years" [ngValue]="option">{{ option }}</option>
+</select>
+
+<select
+  class="period-select month-select"
+  aria-label="Seleziona mese"
+  [ngModel]="month"
+  (ngModelChange)="monthChange.emit($event)"
+>
+  <option [ngValue]="null">Tutto l'anno</option>
+  <option *ngFor="let option of months" [ngValue]="option.value">{{ option.label }}</option>
+</select>
+
+<button
+  type="button"
+  class="period-nav-button"
+  [attr.aria-label]="month === null ? 'Anno successivo' : 'Mese successivo'"
+  [disabled]="!canGoNext"
+  (click)="next.emit()"
+>
+  ›
+</button>

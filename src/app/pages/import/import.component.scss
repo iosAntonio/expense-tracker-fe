@@ -8,8 +8,12 @@
   --import-primary-hover: #8296ff;
   --import-success: #36b982;
   --import-danger: #ed6b75;
+  --import-warning: #f0b43c;
 
   display: block;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
   color: var(--import-text);
   min-width: 0;
 }
@@ -352,6 +356,55 @@
   background: rgba(54, 185, 130, 0.15);
   color: var(--import-success);
   font-size: 22px;
+}
+
+/* Registro degli import */
+
+.duplicate-warning {
+  flex: 0 0 auto;
+  margin: 0 0 10px;
+  padding: 9px 12px;
+  border: 1px solid rgba(240, 180, 60, 0.4);
+  border-radius: 8px;
+  background: rgba(240, 180, 60, 0.1);
+  color: var(--import-warning);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.success-actions {
+  justify-content: center;
+}
+
+.danger-button {
+  color: var(--import-danger);
+}
+
+.history-card .table-container {
+  max-height: 320px;
+
+  tr.reverted td {
+    color: var(--import-muted);
+  }
+
+  .action-column {
+    text-align: right;
+  }
+}
+
+.history-message {
+  margin: 0 0 10px;
+  color: var(--import-muted);
+  font-size: 12px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 /* Responsive */

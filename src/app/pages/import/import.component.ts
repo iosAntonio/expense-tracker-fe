@@ -1,9 +1,13 @@
 
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { CATEGORY_BY_KEY, CATEGORY_KEYS } from '../../core/categories';
+import { ToastService } from '../../core/services/toast.service';
 import {
   ExpenseImportRequest,
-  ExpenseResponse,
-  ExpenseService
+  ExpenseImportResponse,
+  ExpenseService,
+  ImportBatch,
+  ImportRevertResponse
 } from '../../services/expense.service';
 
 @Component({
@@ -11,21 +15,7 @@ import {
   templateUrl: './import.component.html',
   styleUrls: ['./import.component.scss']
 })
-export class ImportComponent {
-
-  private readonly allowedCategories = [
-    'ALIMENTARI',
-    'BAR_RISTORAZIONE',
-    'CASA',
-    'AUTO',
-    'TRASPORTI',
-    'VIAGGI',
-    'SPORT',
-    'SVAGO',
-    'SHOPPING',
-    'SALUTE',
-    'ALTRO'
-  ];
+export class ImportComponent implements OnInit {
 
   selectedFile: string | null = null;
   expenses: ExpenseImportRequest[] = [];
@@ -34,9 +24,56 @@ export class ImportComponent {
   isImporting = false;
 
   importedCount: number | null = null;
+  skippedExternalIds: string[] = [];
   importError: string | null = null;
 
-  constructor(private expenseService: ExpenseService) {}
+  previousImports: ImportBatch[] = [];
+  isChecking = false;
+  private checkToken = 0;
+
+  lastBatch: ImportBatch | null = null;
+  batches: ImportBatch[] = [];
+  historyError: string | null = null;
+  confirmingRevertId: number | null = null;
+  revertingId: number | null = null;
+  revertMessage: string | null = null;
+
+  constructor(
+    private expenseService: ExpenseService,
+    private toastService: ToastService
+  ) {}
+
+  ngOnInit(): void {
+    this.loadHistory();
+  }
+
+  loadHistory(): void {
+    this.expenseService.getImports().subscribe({
+      next: batches => {
+        this.batches = batches;
+        this.historyError = null;
+      },
+      error: () => {
+        this.historyError = 'Non è stato possibile caricare gli import recenti.';
+      }
+    });
+  }
+
+  get previousImportMessage(): string | null {
+    const latest = this.previousImports[0];
+
+    if (!latest) {
+      return null;
+    }
+
+    const count = latest.importedCount === 1
+      ? '1 spesa'
+      : `${latest.importedCount} spese`;
+
+    return `Questo contenuto è già stato importato il ${this.formatDateTime(latest.importedAt)} ` +
+      `come «${latest.fileName}» (${count}). ` +
+      'Se lo importi di nuovo, le spese già presenti verranno saltate.';
+  }
 
   get totalAmount(): number {
     return this.expenses.reduce(
@@ -45,9 +82,35 @@ export class ImportComponent {
     );
   }
 
+  get importedMessage(): string {
+    if (!this.importedCount) {
+      return 'Nessuna nuova spesa importata.';
+    }
+
+    return this.importedCount === 1
+      ? '1 spesa importata correttamente.'
+      : `${this.importedCount} spese importate correttamente.`;
+  }
+
+  get skippedMessage(): string | null {
+    const count = this.skippedExternalIds.length;
+
+    if (count === 0) {
+      return null;
+    }
+
+    const shown = this.skippedExternalIds.slice(0, 5).join(', ');
+    const others = count > 5 ? ` e altre ${count - 5}` : '';
+
+    return count === 1
+      ? `1 spesa era già presente ed è stata saltata (${shown}).`
+      : `${count} spese erano già presenti e sono state saltate (${shown}${others}).`;
+  }
+
   get canImport(): boolean {
     return this.expenses.length > 0 &&
       this.errors.length === 0 &&
+      !this.isChecking &&
       !this.isImporting &&
       this.importedCount === null;
   }
@@ -191,7 +254,7 @@ export class ImportComponent {
 
       if (
         typeof category !== 'string' ||
-        !this.allowedCategories.includes(category)
+        !CATEGORY_KEYS.includes(category)
       ) {
         validationErrors.push(
           `Riga ${row}: categoria non riconosciuta.`
@@ -237,7 +300,27 @@ export class ImportComponent {
 
     if (validationErrors.length === 0) {
       this.expenses = validExpenses;
+      this.checkPreviousImports();
     }
+  }
+
+  private checkPreviousImports(): void {
+    const token = ++this.checkToken;
+    this.isChecking = true;
+
+    this.expenseService.checkImport(this.selectedFile ?? '', this.expenses).subscribe({
+      next: result => {
+        if (token === this.checkToken) {
+          this.previousImports = result.previousImports;
+          this.isChecking = false;
+        }
+      },
+      error: () => {
+        if (token === this.checkToken) {
+          this.isChecking = false;
+        }
+      }
+    });
   }
 
   private isValidDate(value: string): boolean {
@@ -259,19 +342,24 @@ export class ImportComponent {
     this.isImporting = true;
     this.importError = null;
 
-    this.expenseService.importExpenses(this.expenses).subscribe(
-      (response: ExpenseResponse[]) => {
-        this.importedCount = response.length;
+    this.expenseService.importExpenses(this.selectedFile ?? '', this.expenses).subscribe({
+      next: (response: ExpenseImportResponse) => {
+        this.importedCount = response.imported.length;
+        this.skippedExternalIds = response.skippedExternalIds;
+        this.lastBatch = response.batch;
         this.isImporting = false;
+        this.toastService.success(this.importToastMessage());
+        this.loadHistory();
       },
-      error => {
+      error: error => {
         this.importError =
           error.error?.message ||
           'Si è verificato un errore durante l’importazione.';
 
         this.isImporting = false;
+        this.toastService.error(`Importazione non riuscita. ${this.importError}`);
       }
-    );
+    });
   }
 
   resetState(): void {
@@ -279,7 +367,92 @@ export class ImportComponent {
     this.expenses = [];
     this.errors = [];
     this.importedCount = null;
+    this.skippedExternalIds = [];
     this.importError = null;
+    this.previousImports = [];
+    this.isChecking = false;
+    this.checkToken++;
+    this.lastBatch = null;
+    this.confirmingRevertId = null;
+    this.revertMessage = null;
+  }
+
+  requestRevert(batch: ImportBatch): void {
+    if (this.revertingId !== null || batch.revertedAt) {
+      return;
+    }
+
+    if (this.confirmingRevertId !== batch.id) {
+      this.confirmingRevertId = batch.id;
+      return;
+    }
+
+    this.revertingId = batch.id;
+    this.revertMessage = null;
+
+    this.expenseService.revertImport(batch.id).subscribe({
+      next: (response: ImportRevertResponse) => {
+        const message = response.removedCount === 1
+          ? 'Import annullato: 1 spesa rimossa.'
+          : `Import annullato: ${response.removedCount} spese rimosse.`;
+        this.revertMessage = message;
+
+        if (this.lastBatch?.id === response.batch.id) {
+          this.lastBatch = response.batch;
+        }
+
+        this.toastService.success(message);
+        this.revertingId = null;
+        this.confirmingRevertId = null;
+        this.loadHistory();
+      },
+      error: error => {
+        const message: string =
+          error.error?.message || 'Non è stato possibile annullare l’import.';
+        this.revertMessage = message;
+        this.toastService.error(message);
+        this.revertingId = null;
+        this.confirmingRevertId = null;
+        this.loadHistory();
+      }
+    });
+  }
+
+  private importToastMessage(): string {
+    const skipped = this.skippedExternalIds.length;
+
+    if (skipped === 0) {
+      return this.importedMessage;
+    }
+
+    const alreadyPresent = skipped === 1
+      ? '1 spesa era già presente.'
+      : `${skipped} spese erano già presenti.`;
+
+    return `${this.importedMessage} ${alreadyPresent}`;
+  }
+
+  categoryName(key: string): string {
+    return CATEGORY_BY_KEY.get(key)?.name ?? key;
+  }
+
+  trackBatch(_index: number, batch: ImportBatch): number {
+    return batch.id;
+  }
+
+  private formatDateTime(value: string): string {
+    const date = new Date(value);
+    const day = new Intl.DateTimeFormat('it-IT', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    }).format(date);
+    const time = new Intl.DateTimeFormat('it-IT', {
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(date);
+
+    return `${day} alle ${time}`;
   }
 
   formatAmount(amount: number): string {

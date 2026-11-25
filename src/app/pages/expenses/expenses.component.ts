@@ -1,16 +1,13 @@
 import { Component, OnInit } from '@angular/core';
+import { ToastService } from '../../core/services/toast.service';
 import {
   ExpenseService,
   ExpenseResponse,
+  ExpenseUpdateRequest,
 } from '../../services/expense.service';
-
-interface ExpenseCategory {
-  key: string;
-  name: string;
-  emoji: string;
-  color: string;
-  total: number;
-}
+import { CategoryOption } from './expense-edit-dialog/expense-edit-dialog.component';
+import { CATEGORIES, CATEGORY_BY_KEY, CategoryDefinition } from '../../core/categories';
+import { sumAmounts, yearRange } from '../../core/expense-stats';
 
 @Component({
   selector: 'app-expenses',
@@ -23,38 +20,38 @@ export class ExpensesComponent implements OnInit {
   isLoading = true;
   errorMessage: string | null = null;
 
-  readonly projectStart = new Date(2026, 9, 1);
+  readonly currentMonth = this.toMonthKey(new Date());
+  private readonly defaultPeriod = this.addMonths(this.currentMonth, -1);
 
-  selectedMonth = this.getInitialSelectedMonth();
-  selectedCategory = 'ALL';
-  searchTerm = '';
+  // Periodo selezionato: 'AAAA-MM' per un mese, 'AAAA' per l'anno intero.
+  private period = this.defaultPeriod;
+  private category = 'ALL';
+  private search = '';
 
-  // Corrispondenza tra enum backend e categorie visualizzate.
-  private readonly categoryDefinitions = [
-    {
-      key: 'ALIMENTARI',
-      name: 'Spesa & Alimentari',
-      emoji: '🛒',
-      color: '#10b981',
-    },
-    {
-      key: 'BAR_RISTORAZIONE',
-      name: 'Bar e Ristoranti',
-      emoji: '🍽️',
-      color: '#8b5cf6',
-    },
-    { key: 'CASA', name: 'Casa & Utenze', emoji: '🏠', color: '#3b82f6' },
-    { key: 'AUTO', name: 'Auto', emoji: '🚗', color: '#f59e0b' },
-    { key: 'TRASPORTI', name: 'Trasporti', emoji: '🚆', color: '#6366f1' },
-    { key: 'VIAGGI', name: 'Viaggi', emoji: '✈️', color: '#6366f1' },
-    { key: 'SPORT', name: 'Sport', emoji: '🏐', color: '#14b8a6' },
-    { key: 'SVAGO', name: 'Svago', emoji: '🎟️', color: '#8b5cf6' },
-    { key: 'SHOPPING', name: 'Shopping', emoji: '🛍️', color: '#ec4899' },
-    { key: 'SALUTE', name: 'Salute', emoji: '💊', color: '#ef4444' },
-    { key: 'ALTRO', name: 'Altro', emoji: '📦', color: '#a1a1aa' },
-  ];
+  years: number[] = [];
+  periodTransactions: ExpenseResponse[] = [];
+  filteredTransactions: ExpenseResponse[] = [];
+  totalExpenses = 0;
+  filteredTotal = 0;
+  readonly categories = CATEGORIES;
 
-  constructor(private expenseService: ExpenseService) {}
+  editingExpense: ExpenseResponse | null = null;
+  editError: string | null = null;
+  isSaving = false;
+  deletingExpense: ExpenseResponse | null = null;
+  confirmingMonthDelete = false;
+  isDeleting = false;
+
+  readonly categoryOptions: CategoryOption[] = CATEGORIES.map(
+    (category) => ({ key: category.key, label: `${category.emoji} ${category.name}` }),
+  );
+
+  constructor(
+    private expenseService: ExpenseService,
+    private toastService: ToastService,
+  ) {
+    this.refresh();
+  }
 
   ngOnInit(): void {
     this.loadExpenses();
@@ -67,6 +64,7 @@ export class ExpensesComponent implements OnInit {
     this.expenseService.getAllExpenses().subscribe({
       next: (expenses) => {
         this.expenses = expenses;
+        this.refresh();
         this.isLoading = false;
       },
       error: (error) => {
@@ -78,176 +76,100 @@ export class ExpensesComponent implements OnInit {
     });
   }
 
-  private getInitialSelectedMonth(): string {
-    const today = new Date();
-    const previousMonth = new Date(
-      today.getFullYear(),
-      today.getMonth() - 1,
-      1,
-    );
-
-    const selectedDate =
-      previousMonth < this.projectStart ? this.projectStart : previousMonth;
-
-    return this.toMonthKey(selectedDate);
+  get selectedPeriod(): string {
+    return this.period;
   }
 
-  private toMonthKey(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-
-    return `${year}-${month}`;
+  set selectedPeriod(period: string) {
+    this.period = period;
+    this.refresh();
   }
 
-  get currentMonth(): string {
-    return this.toMonthKey(new Date());
+  get selectedCategory(): string {
+    return this.category;
   }
 
-  get monthOptions(): { value: string; label: string }[] {
-    const options: { value: string; label: string }[] = [];
-    const today = new Date();
+  set selectedCategory(category: string) {
+    this.category = category;
+    this.applyFilters();
+  }
 
-    const cursor = new Date(
-      this.projectStart.getFullYear(),
-      this.projectStart.getMonth(),
-      1,
-    );
+  get searchTerm(): string {
+    return this.search;
+  }
 
-    const lastMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  set searchTerm(term: string) {
+    this.search = term;
+    this.applyFilters();
+  }
 
-    while (cursor <= lastMonth) {
-      options.push({
-        value: this.toMonthKey(cursor),
-        label: new Intl.DateTimeFormat('it-IT', {
-          month: 'long',
-          year: 'numeric',
-        }).format(cursor),
-      });
+  get isYearView(): boolean {
+    return this.period.length === 4;
+  }
 
-      cursor.setMonth(cursor.getMonth() + 1);
+  get selectedYear(): number {
+    return Number(this.period.substring(0, 4));
+  }
+
+  get selectedMonthNumber(): number | null {
+    return this.isYearView ? null : Number(this.period.substring(5, 7));
+  }
+
+  get periodLabel(): string {
+    return this.isYearView ? this.period : this.formatMonthLabel(this.period);
+  }
+
+  get periodStatus(): string {
+    const current = this.isYearView
+      ? this.currentMonth.substring(0, 4)
+      : this.currentMonth;
+    const noun = this.isYearView ? 'Anno' : 'Mese';
+
+    if (this.period < current) {
+      return `${noun} concluso`;
     }
 
-    return options;
-  }
-
-  get selectedMonthLabel(): string {
-    const [year, month] = this.selectedMonth.split('-').map(Number);
-
-    return new Intl.DateTimeFormat('it-IT', {
-      month: 'long',
-      year: 'numeric',
-    }).format(new Date(year, month - 1, 1));
+    return this.period === current ? `${noun} in corso` : `${noun} futuro`;
   }
 
   get canGoPrevious(): boolean {
-    return this.selectedMonth > this.toMonthKey(this.projectStart);
+    return Number(this.shiftPeriod(-1).substring(0, 4)) >= this.years[0];
   }
 
   get canGoNext(): boolean {
-    return this.selectedMonth < this.currentMonth;
-  }
-
-  goToPreviousMonth(): void {
-    if (!this.canGoPrevious) {
-      return;
-    }
-
-    const [year, month] = this.selectedMonth.split('-').map(Number);
-    this.selectedMonth = this.toMonthKey(new Date(year, month - 2, 1));
-  }
-
-  goToNextMonth(): void {
-    if (!this.canGoNext) {
-      return;
-    }
-
-    const [year, month] = this.selectedMonth.split('-').map(Number);
-    this.selectedMonth = this.toMonthKey(new Date(year, month, 1));
-  }
-
-  get monthlyTransactions(): ExpenseResponse[] {
-    return this.expenses.filter(
-      (expense) => expense.date.substring(0, 7) === this.selectedMonth,
+    return (
+      Number(this.shiftPeriod(1).substring(0, 4)) <=
+      this.years[this.years.length - 1]
     );
   }
 
-  get filteredTransactions(): ExpenseResponse[] {
-    const search = this.searchTerm.trim().toLocaleLowerCase('it-IT');
-
-    return this.monthlyTransactions
-      .filter((expense) => {
-        const matchesCategory =
-          this.selectedCategory === 'ALL' ||
-          expense.category === this.selectedCategory;
-
-        const formattedDate = this.formatDate(expense.date).toLocaleLowerCase(
-          'it-IT',
-        );
-
-        const matchesSearch =
-          (expense.description ?? '')
-            .toLocaleLowerCase('it-IT')
-            .includes(search) ||
-          formattedDate.includes(search) ||
-          expense.date.includes(search);
-
-        return matchesCategory && matchesSearch;
-      })
-      .sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
-  }
-
-  get totalExpenses(): number {
-    return this.monthlyTransactions.reduce(
-      (total, expense) => total + expense.amount,
-      0,
-    );
-  }
-
-  get filteredTotal(): number {
-    return this.filteredTransactions.reduce(
-      (total, expense) => total + expense.amount,
-      0,
-    );
-  }
-
-  get categories(): ExpenseCategory[] {
-    return this.categoryDefinitions.map((category) => ({
-      ...category,
-      total: this.monthlyTransactions
-        .filter((expense) => expense.category === category.key)
-        .reduce((total, expense) => total + expense.amount, 0),
-    }));
-  }
-
-  get chartGradient(): string {
-    if (this.totalExpenses === 0) {
-      return 'conic-gradient(var(--color-border) 0% 100%)';
+  goToPrevious(): void {
+    if (this.canGoPrevious) {
+      this.selectedPeriod = this.shiftPeriod(-1);
     }
-
-    let position = 0;
-
-    const segments = this.categories
-      .filter((category) => category.total > 0)
-      .map((category) => {
-        const start = position;
-        position += (category.total / this.totalExpenses) * 100;
-
-        return `${category.color} ${start}% ${position}%`;
-      });
-
-    return `conic-gradient(${segments.join(', ')})`;
   }
 
-  percentage(category: ExpenseCategory): string {
-    if (this.totalExpenses === 0) {
-      return '0.0';
+  goToNext(): void {
+    if (this.canGoNext) {
+      this.selectedPeriod = this.shiftPeriod(1);
     }
-
-    return ((category.total / this.totalExpenses) * 100).toFixed(1);
   }
 
-  categoryFor(key: string): ExpenseCategory | undefined {
-    return this.categories.find((category) => category.key === key);
+  selectYear(year: number): void {
+    this.selectedPeriod = this.isYearView
+      ? String(year)
+      : `${year}${this.period.substring(4)}`;
+  }
+
+  selectMonth(month: number | null): void {
+    this.selectedPeriod =
+      month === null
+        ? String(this.selectedYear)
+        : `${this.selectedYear}-${String(month).padStart(2, '0')}`;
+  }
+
+  categoryFor(key: string): CategoryDefinition | undefined {
+    return CATEGORY_BY_KEY.get(key);
   }
 
   formatEUR(value: number): string {
@@ -267,5 +189,227 @@ export class ExpensesComponent implements OnInit {
 
   onSearch(event: Event): void {
     this.searchTerm = (event.target as HTMLInputElement).value;
+  }
+
+  openEdit(expense: ExpenseResponse): void {
+    this.editingExpense = expense;
+    this.editError = null;
+  }
+
+  closeEdit(): void {
+    if (!this.isSaving) {
+      this.editingExpense = null;
+      this.editError = null;
+    }
+  }
+
+  saveExpense(request: ExpenseUpdateRequest): void {
+    const original = this.editingExpense;
+
+    if (!original) {
+      return;
+    }
+
+    this.isSaving = true;
+    this.editError = null;
+
+    this.expenseService.updateExpense(original.id, request).subscribe({
+      next: (updated) => {
+        this.expenses = this.expenses.map((expense) =>
+          expense.id === updated.id ? updated : expense,
+        );
+        this.refresh();
+        this.isSaving = false;
+        this.editingExpense = null;
+
+        const movedTo = updated.date.substring(0, 7);
+        this.toastService.success(
+          movedTo === original.date.substring(0, 7)
+            ? 'Spesa aggiornata.'
+            : `Spesa aggiornata e spostata a ${this.formatMonthLabel(movedTo)}.`,
+        );
+      },
+      error: (error) => {
+        this.isSaving = false;
+        this.editError =
+          error.error?.message || 'Non è stato possibile salvare la spesa.';
+        this.toastService.error(`Modifica non riuscita. ${this.editError}`);
+      },
+    });
+  }
+
+  askDelete(expense: ExpenseResponse): void {
+    this.deletingExpense = expense;
+  }
+
+  cancelDelete(): void {
+    if (!this.isDeleting) {
+      this.deletingExpense = null;
+    }
+  }
+
+  get deleteExpenseMessage(): string {
+    const expense = this.deletingExpense;
+
+    if (!expense) {
+      return '';
+    }
+
+    return (
+      `«${expense.description || 'Spesa senza descrizione'}» del ` +
+      `${this.formatDate(expense.date)}, ${this.formatEUR(expense.amount)}. ` +
+      "L'operazione non si può annullare."
+    );
+  }
+
+  confirmDelete(): void {
+    const expense = this.deletingExpense;
+
+    if (!expense) {
+      return;
+    }
+
+    this.isDeleting = true;
+
+    this.expenseService.deleteExpense(expense.id).subscribe({
+      next: () => {
+        this.expenses = this.expenses.filter((item) => item.id !== expense.id);
+        this.refresh();
+        this.isDeleting = false;
+        this.deletingExpense = null;
+        this.toastService.success('Spesa eliminata.');
+      },
+      error: (error) => {
+        this.isDeleting = false;
+        this.deletingExpense = null;
+        this.toastService.error(
+          `Eliminazione non riuscita. ${error.error?.message || 'Riprova più tardi.'}`,
+        );
+      },
+    });
+  }
+
+  askDeleteMonth(): void {
+    if (!this.isYearView && this.periodTransactions.length > 0) {
+      this.confirmingMonthDelete = true;
+    }
+  }
+
+  cancelDeleteMonth(): void {
+    if (!this.isDeleting) {
+      this.confirmingMonthDelete = false;
+    }
+  }
+
+  get deleteMonthMessage(): string {
+    const count = this.periodTransactions.length;
+    const what =
+      count === 1 ? 'Verrà eliminata 1 spesa' : `Verranno eliminate ${count} spese`;
+
+    return (
+      `${what} di ${this.periodLabel}, per un totale di ` +
+      `${this.formatEUR(this.totalExpenses)}. L'operazione non si può annullare.`
+    );
+  }
+
+  confirmDeleteMonth(): void {
+    if (this.isYearView) {
+      return;
+    }
+
+    const month = this.period;
+    const label = this.periodLabel;
+
+    this.isDeleting = true;
+
+    this.expenseService.deleteMonth(month).subscribe({
+      next: (result) => {
+        this.expenses = this.expenses.filter(
+          (expense) => !expense.date.startsWith(`${month}-`),
+        );
+        this.refresh();
+        this.isDeleting = false;
+        this.confirmingMonthDelete = false;
+        this.toastService.success(
+          result.deletedCount === 1
+            ? `Eliminata 1 spesa di ${label}.`
+            : `Eliminate ${result.deletedCount} spese di ${label}.`,
+        );
+      },
+      error: (error) => {
+        this.isDeleting = false;
+        this.confirmingMonthDelete = false;
+        this.toastService.error(
+          `Eliminazione non riuscita. ${error.error?.message || 'Riprova più tardi.'}`,
+        );
+      },
+    });
+  }
+
+  private refresh(): void {
+    const prefix = `${this.period}-`;
+    this.periodTransactions = this.expenses.filter((expense) =>
+      expense.date.startsWith(prefix),
+    );
+    this.totalExpenses = sumAmounts(this.periodTransactions);
+    this.years = yearRange(this.expenses, [
+      this.selectedYear,
+      Number(this.defaultPeriod.substring(0, 4)),
+      Number(this.currentMonth.substring(0, 4)),
+    ]);
+    this.applyFilters();
+  }
+
+  private applyFilters(): void {
+    const search = this.search.trim().toLocaleLowerCase('it-IT');
+
+    this.filteredTransactions = this.periodTransactions
+      .filter((expense) => {
+        const matchesCategory =
+          this.category === 'ALL' || expense.category === this.category;
+
+        const formattedDate = this.formatDate(expense.date).toLocaleLowerCase(
+          'it-IT',
+        );
+
+        const matchesSearch =
+          (expense.description ?? '')
+            .toLocaleLowerCase('it-IT')
+            .includes(search) ||
+          formattedDate.includes(search) ||
+          expense.date.includes(search);
+
+        return matchesCategory && matchesSearch;
+      })
+      .sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+    this.filteredTotal = sumAmounts(this.filteredTransactions);
+  }
+
+  private shiftPeriod(delta: number): string {
+    return this.isYearView
+      ? String(this.selectedYear + delta)
+      : this.addMonths(this.period, delta);
+  }
+
+  private toMonthKey(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+
+    return `${year}-${month}`;
+  }
+
+  private addMonths(monthKey: string, delta: number): string {
+    const [year, month] = monthKey.split('-').map(Number);
+
+    return this.toMonthKey(new Date(year, month - 1 + delta, 1));
+  }
+
+  private formatMonthLabel(monthKey: string): string {
+    const [year, month] = monthKey.split('-').map(Number);
+
+    return new Intl.DateTimeFormat('it-IT', {
+      month: 'long',
+      year: 'numeric',
+    }).format(new Date(year, month - 1, 1));
   }
 }

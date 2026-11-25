@@ -6,43 +6,27 @@
           <span class="brand-icon" aria-hidden="true">◈</span>
           Registro Spese
         </h1>
-        <p>Riepilogo del mese selezionato</p>
+        <p>
+          {{
+            isYearView ? "Riepilogo dell'anno selezionato" : 'Riepilogo del mese selezionato'
+          }}
+        </p>
       </div>
 
-      <div class="month-navigation">
-        <button
-          type="button"
-          class="month-nav-button"
-          aria-label="Mese precedente"
-          [disabled]="!canGoPrevious"
-          (click)="goToPreviousMonth()"
-        >
-          ‹
-        </button>
-
-        <select
-          class="month-selector"
-          aria-label="Seleziona mese"
-          [(ngModel)]="selectedMonth"
-        >
-          <option *ngFor="let month of monthOptions" [value]="month.value">
-            {{ month.label }}
-          </option>
-        </select>
-
-        <button
-          type="button"
-          class="month-nav-button"
-          aria-label="Mese successivo"
-          [disabled]="!canGoNext"
-          (click)="goToNextMonth()"
-        >
-          ›
-        </button>
-      </div>
+      <app-period-selector
+        [years]="years"
+        [year]="selectedYear"
+        [month]="selectedMonthNumber"
+        [canGoPrevious]="canGoPrevious"
+        [canGoNext]="canGoNext"
+        (yearChange)="selectYear($event)"
+        (monthChange)="selectMonth($event)"
+        (previous)="goToPrevious()"
+        (next)="goToNext()"
+      ></app-period-selector>
 
       <span class="month-badge">
-        {{ selectedMonth < currentMonth ? "Mese concluso" : "Mese in corso" }}
+        {{ periodStatus }}
       </span>
     </div>
   </header>
@@ -52,8 +36,8 @@
       <article class="metric-card">
         <div>
           <p class="metric-label">Totale Entrate</p>
-          <p class="metric-value positive">+3.056,56 €</p>
-          <p class="metric-note">Stipendio, 730, saveback, interessi</p>
+          <p class="metric-value unavailable" title="Non disponibile">—</p>
+          <p class="metric-note">Le entrate non sono ancora gestite</p>
         </div>
         <span class="metric-icon income-icon" aria-hidden="true">↙</span>
       </article>
@@ -68,16 +52,16 @@
       <article class="metric-card">
         <div>
           <p class="metric-label">Saldo del Periodo</p>
-          <p class="metric-value balance">+263,84 €</p>
-          <p class="metric-note">Liquidità rimasta sul C/C</p>
+          <p class="metric-value unavailable" title="Non disponibile">—</p>
+          <p class="metric-note">Calcolabile quando ci saranno le entrate</p>
         </div>
         <span class="metric-icon balance-icon" aria-hidden="true">＝</span>
       </article>
       <article class="metric-card">
         <div>
           <p class="metric-label">Investimenti</p>
-          <p class="metric-value investment">200,00 €</p>
-          <p class="metric-note">Accumulo patrimonio (separato)</p>
+          <p class="metric-value unavailable" title="Non disponibile">—</p>
+          <p class="metric-note">Gli investimenti non sono ancora gestiti</p>
         </div>
         <span class="metric-icon investment-icon" aria-hidden="true">↗</span>
       </article>
@@ -92,7 +76,7 @@
           </h2>
           <p class="table-summary">
             Mostrando {{ filteredTransactions.length }} di
-            {{ monthlyTransactions.length }} spese<span
+            {{ periodTransactions.length }} spese<span
               class="summary-separator"
               >—</span
             >
@@ -119,6 +103,19 @@
               {{ category.emoji }} {{ category.name }}
             </option>
           </select>
+          <button
+            type="button"
+            class="button button-danger-outline delete-month-button"
+            [disabled]="isYearView || !periodTransactions.length || isDeleting"
+            [title]="
+              isYearView
+                ? 'Seleziona un mese per eliminarne le spese'
+                : 'Elimina tutte le spese di ' + periodLabel
+            "
+            (click)="askDeleteMonth()"
+          >
+            Elimina mese
+          </button>
         </div>
       </div>
       <div class="loading-state" *ngIf="isLoading">
@@ -141,6 +138,9 @@
                 <th>Descrizione Spesa</th>
                 <th>Macro-Area</th>
                 <th class="amount-heading">Importo</th>
+                <th class="row-actions">
+                  <span class="visually-hidden">Azioni</span>
+                </th>
               </tr>
             </thead>
 
@@ -165,6 +165,44 @@
                 <td class="amount-cell">
                   {{ formatEUR(transaction.amount) }}
                 </td>
+
+                <td class="row-actions">
+                  <button
+                    type="button"
+                    class="icon-button"
+                    title="Modifica"
+                    [attr.aria-label]="'Modifica ' + (transaction.description || 'spesa')"
+                    (click)="openEdit(transaction)"
+                  >
+                    <svg viewBox="0 0 16 16" aria-hidden="true">
+                      <path
+                        d="M10.9 2.4l2.7 2.7-8 8H2.9v-2.7z"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.4"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    class="icon-button danger"
+                    title="Elimina"
+                    [attr.aria-label]="'Elimina ' + (transaction.description || 'spesa')"
+                    (click)="askDelete(transaction)"
+                  >
+                    <svg viewBox="0 0 16 16" aria-hidden="true">
+                      <path
+                        d="M2.8 4.4h10.4M6.4 4.4V2.8h3.2v1.6M4.3 4.4l.7 8.8h6l.7-8.8"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.4"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -172,27 +210,57 @@
 
         <ng-template #emptyState>
           <div class="empty-state">
-            <span *ngIf="monthlyTransactions.length; else noMonthExpenses">
+            <span *ngIf="periodTransactions.length; else noMonthExpenses">
               Nessuna spesa trovata con i filtri selezionati.
             </span>
 
             <ng-template #noMonthExpenses>
-              Nessuna spesa registrata per {{ selectedMonthLabel }}.
+              Nessuna spesa registrata {{ isYearView ? 'nel' : 'per' }} {{ periodLabel }}.
             </ng-template>
           </div>
         </ng-template>
       </ng-container>
       <ng-template #emptyState>
         <div class="empty-state">
-          <span *ngIf="monthlyTransactions.length; else noMonthExpenses">
+          <span *ngIf="periodTransactions.length; else noMonthExpenses">
             Nessuna spesa trovata con i filtri selezionati.
           </span>
 
           <ng-template #noMonthExpenses>
-            Nessuna spesa registrata per {{ selectedMonthLabel }}.
+            Nessuna spesa registrata {{ isYearView ? 'nel' : 'per' }} {{ periodLabel }}.
           </ng-template>
         </div>
       </ng-template>
     </section>
   </main>
 </div>
+
+<app-expense-edit-dialog
+  *ngIf="editingExpense"
+  [expense]="editingExpense"
+  [categories]="categoryOptions"
+  [saving]="isSaving"
+  [serverError]="editError"
+  (saved)="saveExpense($event)"
+  (dismissed)="closeEdit()"
+></app-expense-edit-dialog>
+
+<app-confirm-dialog
+  *ngIf="deletingExpense"
+  title="Eliminare questa spesa?"
+  [message]="deleteExpenseMessage"
+  confirmLabel="Elimina spesa"
+  [busy]="isDeleting"
+  (confirmed)="confirmDelete()"
+  (dismissed)="cancelDelete()"
+></app-confirm-dialog>
+
+<app-confirm-dialog
+  *ngIf="confirmingMonthDelete"
+  title="Eliminare tutto il mese?"
+  [message]="deleteMonthMessage"
+  confirmLabel="Elimina il mese"
+  [busy]="isDeleting"
+  (confirmed)="confirmDeleteMonth()"
+  (dismissed)="cancelDeleteMonth()"
+></app-confirm-dialog>
